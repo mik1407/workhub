@@ -43,7 +43,7 @@ final class RailButton: NSView {
         super.updateTrackingAreas()
         trackingAreas.forEach { removeTrackingArea($0) }
         addTrackingArea(NSTrackingArea(rect: .zero,
-                                       options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       options: [.mouseEnteredAndExited, .cursorUpdate, .activeAlways, .inVisibleRect],
                                        owner: self, userInfo: nil))
     }
 
@@ -51,6 +51,8 @@ final class RailButton: NSView {
     override func mouseExited(with event: NSEvent) { hovering = false }
     override func mouseDown(with event: NSEvent) { onClick?() }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    // Manina al passaggio del mouse: si capisce che è cliccabile.
+    override func cursorUpdate(with event: NSEvent) { NSCursor.pointingHand.set() }
 
     private func updateTint() {
         imageView.contentTintColor = isActive ? Theme.todoAccent
