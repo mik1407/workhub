@@ -284,6 +284,34 @@
   ::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--surface-2); }
   ::-webkit-scrollbar-track { background: transparent; }
 
+  /* Tema chiaro (Impostazioni > Appearance): l'app imposta data-theme="light" sulla pagina */
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #f0f2f6;
+    --surface-2: #ffffff;
+    --hover: rgba(15, 23, 42, 0.045);
+    --text: #1b2333;
+    --muted: #5c6880;
+    --faint: #8a95a8;
+    --ring: #b9c1ce;
+    --accent: #1a7fd0;
+    --accent-soft: rgba(26, 127, 208, 0.1);
+    --danger: #d93d32;
+    color-scheme: light;
+  }
+  :root[data-theme="light"] .tabs { box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.05); }
+  :root[data-theme="light"] .tab.active { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12), inset 0 0 0 0.5px rgba(15, 23, 42, 0.06); }
+  :root[data-theme="light"] .due:hover { filter: brightness(0.96); }
+  :root[data-theme="light"] .pop {
+    background: #ffffff;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+  }
+  :root[data-theme="light"] .pop .sep { background: rgba(15, 23, 42, 0.08); }
+  :root[data-theme="light"] .pop input { background: var(--surface); box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.1); color-scheme: light; }
+  :root[data-theme="light"] .pop input:focus { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  :root[data-theme="light"] .ghost { box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18), inset 0 0 0 0.5px rgba(15, 23, 42, 0.08); }
+  :root[data-theme="light"] ::-webkit-scrollbar-thumb { background: #d3d9e2; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
   }

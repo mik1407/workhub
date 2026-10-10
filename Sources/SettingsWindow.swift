@@ -17,9 +17,8 @@ final class SettingsWindow: NSObject {
         window.title = "Settings"
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 720, height: 480)
-        window.appearance = NSAppearance(named: .darkAqua)
-        window.backgroundColor = Theme.sidebar
         window.contentView = panel.webView
+        applyWindowTheme()
         window.center()
         _ = window.setFrameAutosaveName("WorkHubSettings")
         panel.onMessage = { [weak self] body in
@@ -34,6 +33,17 @@ final class SettingsWindow: NSObject {
     func show() {
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    func applyTheme() {
+        applyWindowTheme()
+        panel.applyTheme()
+    }
+
+    /// Barra del titolo e sfondo come la pagina.
+    private func applyWindowTheme() {
+        window.appearance = NSAppearance(named: Theme.isLight ? .aqua : .darkAqua)
+        window.backgroundColor = Theme.content
     }
 
     func push(_ payload: String) {

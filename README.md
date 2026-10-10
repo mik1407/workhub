@@ -91,6 +91,8 @@ Timer Pomodoro nella barra destra: 25 minuti di focus, 5 di pausa, e si ripete f
   silenzio durante il focus con le eccezioni che scegli.
 - **Focus**: durate, pausa lunga ogni N sessioni, avvio automatico della fase successiva o attesa del click,
   suono di fine fase.
+- **Appearance**: tema Dark, Light o Automatic (segue macOS) per cornice, barre, pannelli e Impostazioni.
+  I servizi non cambiano: seguono sempre il tema di macOS.
 
 Tutto si applica subito e viene salvato in `~/Library/Application Support/WorkHub/settings.json`.
 Altre cartelle utili: `icons/` (icone personalizzate), `Sounds/` (suoni del Focus), `todos.json`.

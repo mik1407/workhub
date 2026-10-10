@@ -177,6 +177,30 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
 
+  /* Tema chiaro (Impostazioni > Appearance): l'app imposta data-theme="light" sulla pagina */
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #f0f2f6;
+    --surface-2: #e4e8ee;
+    --text: #1b2333;
+    --muted: #5c6880;
+    --faint: #8a95a8;
+    --accent: #1a7fd0;
+    --green: #12935f;
+    color-scheme: light;
+  }
+  :root[data-theme="light"] .dial .track { stroke: rgba(15, 23, 42, 0.07); }
+  :root[data-theme="light"] .sound { border-top-color: rgba(15, 23, 42, 0.08); }
+  :root[data-theme="light"] .switch { background: #cdd4de; }
+  :root[data-theme="light"] .switch[aria-checked="true"] { background: var(--accent); }
+  :root[data-theme="light"] .chip.add { box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.15); }
+  :root[data-theme="light"] .chip.add:hover { box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.3); }
+  :root[data-theme="light"] input[type="range"]::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--accent) var(--fill, 50%), #d5dbe4 var(--fill, 50%));
+  }
+  :root[data-theme="light"] input[type="range"]::-webkit-slider-thumb {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3), 0 0 0 0.5px rgba(15, 23, 42, 0.12);
+  }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }

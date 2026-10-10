@@ -168,8 +168,41 @@
   .svc-cell { display: flex; align-items: center; gap: 10px; }
   .muted-col { opacity: 0.35; }
 
+  /* Aspetto */
+  .segmented { display: inline-flex; flex: none; gap: 2px; padding: 3px; border-radius: 9px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+  .segmented button { height: 26px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .segmented button:hover { color: var(--text); }
+  .segmented button[aria-checked="true"] { background: var(--accent); color: #fff; }
+
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--surface-2); }
+
+  /* Tema chiaro: l'app imposta data-theme="light" sulla pagina */
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #f3f5f8;
+    --surface-2: #e4e8ee;
+    --hover: rgba(15, 23, 42, 0.045);
+    --line: rgba(15, 23, 42, 0.08);
+    --text: #1b2333;
+    --muted: #5c6880;
+    --faint: #8a95a8;
+    --accent: #1a7fd0;
+    --accent-soft: rgba(26, 127, 208, 0.1);
+    --danger: #d93d32;
+    color-scheme: light;
+  }
+  :root[data-theme="light"] .btn:hover { filter: brightness(0.96); }
+  :root[data-theme="light"] .btn:disabled { filter: none; }
+  :root[data-theme="light"] .btn.danger { background: rgba(217, 61, 50, 0.1); }
+  :root[data-theme="light"] .btn.danger.armed { background: var(--danger); }
+  :root[data-theme="light"] .switch { background: #cdd4de; }
+  :root[data-theme="light"] .switch[aria-checked="true"] { background: var(--accent); }
+  :root[data-theme="light"] .ghost { box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18); }
+  :root[data-theme="light"] .sheet-backdrop { background: rgba(15, 23, 42, 0.28); }
+  :root[data-theme="light"] .sheet { box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25), inset 0 0 0 1px var(--line); }
+  :root[data-theme="light"] ::-webkit-scrollbar-thumb { background: #cfd5df; }
+
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
 </style>
 </head>
@@ -186,6 +219,10 @@
     <button class="nav-item" data-tab="focus" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M9.5 2.5h5M12 2.5V6M12 13.5V9.5"/></svg>
       Focus
+    </button>
+    <button class="nav-item" data-tab="appearance" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>
+      Appearance
     </button>
   </nav>
 
@@ -257,6 +294,23 @@
           <div class="label"><strong>Sound at the end of each phase</strong>
             <span>A short chime in addition to the notification.</span></div>
           <button class="switch" id="chime" type="button" role="switch" aria-label="Chime"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- APPEARANCE -->
+    <section id="tab-appearance" hidden>
+      <div class="title-row"><div><h1>Appearance</h1>
+        <div class="subtitle">Colors of the sidebars, panels and settings. Services keep following macOS.</div></div></div>
+      <div class="card">
+        <div class="row">
+          <div class="label"><strong>Theme</strong>
+            <span>Automatic switches between light and dark together with macOS.</span></div>
+          <div class="segmented" id="theme" role="radiogroup" aria-label="Theme">
+            <button type="button" role="radio" data-value="dark">Dark</button>
+            <button type="button" role="radio" data-value="light">Light</button>
+            <button type="button" role="radio" data-value="system">Automatic</button>
+          </div>
         </div>
       </div>
     </section>
@@ -339,10 +393,11 @@
 
   function render() {
     document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
-    for (const name of ['services', 'notifications', 'focus']) $('tab-' + name).hidden = name !== tab;
+    for (const name of ['services', 'notifications', 'focus', 'appearance']) $('tab-' + name).hidden = name !== tab;
     if (tab === 'services') renderServices();
     if (tab === 'notifications') renderNotifications();
     if (tab === 'focus') renderFocus();
+    if (tab === 'appearance') renderAppearance();
   }
 
   // ---------- Services ----------
@@ -670,6 +725,19 @@
   numberSetting('long-minutes', 'longBreakMinutes');
   $('auto-start').addEventListener('click', () => { S.focus.autoStart = !S.focus.autoStart; save(); renderFocus(); });
   $('chime').addEventListener('click', () => { S.focus.chime = !S.focus.chime; save(); renderFocus(); });
+
+  // ---------- Appearance ----------
+  // I colori della pagina li cambia l'app (data-theme), anche per "Automatic".
+  function renderAppearance() {
+    const current = S.appearance || 'dark';
+    document.querySelectorAll('#theme button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === current)));
+  }
+  document.querySelectorAll('#theme button').forEach((b) => b.addEventListener('click', () => {
+    if ((S.appearance || 'dark') === b.dataset.value) return;
+    S.appearance = b.dataset.value;
+    save();
+    renderAppearance();
+  }));
 
   // ---------- Dall'app ----------
   window.settingsUpdate = (payload) => {

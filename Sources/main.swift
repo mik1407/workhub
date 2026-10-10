@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep,
                                                          reason: "Servizi di messaggistica attivi")
         Notifier.shared.setup()
+        Theme.apply(SettingsStore.shared.settings.appearance)   // prima di creare finestra e pannelli
         let controller = AppController()
         controller.buildMenu()
         controller.start()

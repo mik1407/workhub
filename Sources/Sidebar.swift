@@ -1,16 +1,55 @@
 import Cocoa
 
+/// Colori dell'app, in versione scura e chiara (Impostazioni > Appearance).
+/// Le viste li leggono a ogni disegno: dopo un cambio di tema basta ridisegnarle (vedi refresh).
 enum Theme {
-    static let sidebar      = NSColor(srgbRed: 0.039, green: 0.067, blue: 0.125, alpha: 1) // blu notte
-    static let tile         = NSColor(srgbRed: 0.125, green: 0.129, blue: 0.141, alpha: 1)
-    static let tileHover    = NSColor(srgbRed: 0.165, green: 0.169, blue: 0.180, alpha: 1)
-    static let tileSelected = NSColor(srgbRed: 0.180, green: 0.184, blue: 0.196, alpha: 1)
-    static let accent       = NSColor(srgbRed: 0.898, green: 0.440, blue: 0.227, alpha: 1) // indicatore attivo
-    static let badge        = NSColor(srgbRed: 1.000, green: 0.231, blue: 0.188, alpha: 1)
-    static let content      = NSColor(srgbRed: 0.039, green: 0.067, blue: 0.125, alpha: 1) // come la cornice
-    static let todoAccent   = NSColor(srgbRed: 0.184, green: 0.608, blue: 0.914, alpha: 1) // blu del pannello Todos
-    static let railActive   = NSColor(srgbRed: 0.145, green: 0.192, blue: 0.267, alpha: 1)
-    static let breakGreen   = NSColor(srgbRed: 0.247, green: 0.792, blue: 0.557, alpha: 1) // pausa del Focus
+    static private(set) var isLight = false
+
+    private static func rgb(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat = 1) -> NSColor {
+        NSColor(srgbRed: r, green: g, blue: b, alpha: a)
+    }
+    private static func pick(_ dark: NSColor, _ light: NSColor) -> NSColor { isLight ? light : dark }
+    private static func ink(_ alpha: CGFloat) -> NSColor {   // bianco sul tema scuro, blu notte sul chiaro
+        pick(rgb(1, 1, 1, alpha), rgb(0.106, 0.137, 0.200, alpha))
+    }
+
+    static var sidebar: NSColor      { pick(rgb(0.039, 0.067, 0.125), rgb(0.914, 0.929, 0.953)) } // cornice
+    static var tile: NSColor         { pick(rgb(0.125, 0.129, 0.141), rgb(0.863, 0.882, 0.914)) }
+    static var tileHover: NSColor    { pick(rgb(0.165, 0.169, 0.180), rgb(0.824, 0.847, 0.882)) }
+    static var tileSelected: NSColor { pick(rgb(0.180, 0.184, 0.196), rgb(0.973, 0.976, 0.984)) }
+    static var accent: NSColor       { rgb(0.898, 0.440, 0.227) }                                 // indicatore attivo
+    static var badge: NSColor        { rgb(1.000, 0.231, 0.188) }
+    static var content: NSColor      { pick(rgb(0.039, 0.067, 0.125), rgb(1, 1, 1)) }             // sfondo delle card
+    static var todoAccent: NSColor   { pick(rgb(0.184, 0.608, 0.914), rgb(0.102, 0.498, 0.816)) } // blu dei pannelli
+    static var railActive: NSColor   { pick(rgb(0.145, 0.192, 0.267), rgb(0.831, 0.894, 0.965)) }
+    static var breakGreen: NSColor   { pick(rgb(0.247, 0.792, 0.557), rgb(0.071, 0.576, 0.373)) } // pausa del Focus
+    static var railIcon: NSColor     { ink(0.55) }
+    static var railIconHover: NSColor { ink(0.85) }
+    static var hoverFill: NSColor    { ink(0.06) }
+    static var progressTrack: NSColor { ink(isLight ? 0.10 : 0.08) }
+    static var tileLetter: NSColor   { ink(isLight ? 0.75 : 0.85) }
+    static var tileRing: NSColor     { ink(isLight ? 0.22 : 0.28) }
+
+    /// Applica il tema scelto ("Automatic" segue macOS). Restituisce true se è cambiato.
+    @discardableResult
+    static func apply(_ mode: AppearanceMode) -> Bool {
+        let light: Bool
+        switch mode {
+        case .dark: light = false
+        case .light: light = true
+        case .system: light = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua
+        }
+        guard light != isLight else { return false }
+        isLight = light
+        return true
+    }
+
+    /// Ridisegna una vista e quelle che contiene, dopo un cambio di tema.
+    static func refresh(_ view: NSView) {
+        view.needsDisplay = true
+        (view as? RailButton)?.updateTint()
+        view.subviews.forEach(refresh)
+    }
 }
 
 /// Un'icona della sidebar: riquadro arrotondato, icona del servizio, badge rosso.
@@ -77,7 +116,7 @@ final class ServiceTile: NSView {
         } else {
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: 22, weight: .semibold),
-                .foregroundColor: NSColor.white.withAlphaComponent(0.85),
+                .foregroundColor: Theme.tileLetter,
             ]
             let str = letter as NSString
             let s = str.size(withAttributes: attrs)
@@ -88,7 +127,7 @@ final class ServiceTile: NSView {
 
         // Al passaggio del mouse: anello sottile (lo sfondo della tessera ora è coperto dall'icona)
         if hovering && !isSelected {
-            NSColor.white.withAlphaComponent(0.28).setStroke()
+            Theme.tileRing.setStroke()
             let ring = NSBezierPath(roundedRect: tileRect.insetBy(dx: -2.5, dy: -2.5), xRadius: 16.5, yRadius: 16.5)
             ring.lineWidth = 1.5
             ring.stroke()

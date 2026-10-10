@@ -27,11 +27,12 @@ final class AppController: NSObject, NSWindowDelegate {
     private(set) var services: [ServiceController] = []
     private(set) var selectedIndex = 0
     private var keyMonitor: Any?
-    private let store = SettingsStore()
+    private let store = SettingsStore.shared
     private var settingsWindow: SettingsWindow?
     private var goMenu: NSMenu?
     private var reminderWork: DispatchWorkItem?
     private var overdueTimer: Timer?
+    private var appearanceObserver: NSKeyValueObservation?
 
     private var current: ServiceController? {
         services.indices.contains(selectedIndex) ? services[selectedIndex] : nil
@@ -46,6 +47,24 @@ final class AppController: NSObject, NSWindowDelegate {
         setupServices()
         setupShortcuts()
         setupTodos()
+        // Tema "Automatic": segue il passaggio di macOS da chiaro a scuro e viceversa.
+        appearanceObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
+            DispatchQueue.main.async { self?.applyTheme() }
+        }
+    }
+
+    /// Tema chiaro o scuro (Impostazioni > Appearance) su cornice, barre, pannelli e Impostazioni.
+    /// I servizi non cambiano: seguono il tema di macOS, come in Safari.
+    private func applyTheme() {
+        guard Theme.apply(store.settings.appearance) else { return }
+        window.backgroundColor = Theme.sidebar
+        for card in [content, panelContainer] { card.layer?.backgroundColor = Theme.content.cgColor }
+        Theme.refresh(sidebar)
+        Theme.refresh(rail)
+        todoPanel.panel.applyTheme()
+        focusPanel.applyTheme()
+        settingsWindow?.applyTheme()
+        focusChanged()   // colore dell'anello del Focus
     }
 
     // MARK: - Setup
@@ -348,6 +367,7 @@ final class AppController: NSObject, NSWindowDelegate {
         let now = store.settings
         if now.services != previous.services { applyServices(now.services, isLaunch: false) }
         if now.focus != previous.focus { focusTimer.apply(now.focus) }
+        if now.appearance != previous.appearance { applyTheme() }
         badgesChanged()
     }
 

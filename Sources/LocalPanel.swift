@@ -10,19 +10,18 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     var onMessage: ((Any) -> Void)?
     var onLoad: (() -> Void)?
     private let page: String
+    private let startupScript: String?
 
     init(page: String, handler: String, startupScript: String? = nil) {
         self.page = page
+        self.startupScript = startupScript
         let content = WKUserContentController()
-        if let startupScript = startupScript {
-            content.addUserScript(WKUserScript(source: startupScript, injectionTime: .atDocumentStart,
-                                               forMainFrameOnly: true))
-        }
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = content
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.alphaValue = 0   // invisibile finché la pagina non è pronta (niente lampo bianco)
         super.init()
+        installScripts()
         content.add(self, name: handler)
         webView.navigationDelegate = self
         if let url = Bundle.main.url(forResource: page, withExtension: "html") {
@@ -32,6 +31,26 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     func run(_ script: String) {
         webView.evaluateJavaScript(script, completionHandler: nil)
+    }
+
+    /// Cambio di tema: la pagina aperta si aggiorna subito, e se viene ricaricata parte già col tema giusto.
+    func applyTheme() {
+        installScripts()
+        run(Self.themeScript)
+    }
+
+    private static var themeScript: String {
+        "document.documentElement.dataset.theme = '\(Theme.isLight ? "light" : "dark")';"
+    }
+
+    /// Script eseguiti all'apertura della pagina: il tema (niente lampo dei colori dell'altro tema)
+    /// ed eventuali dati iniziali.
+    private func installScripts() {
+        let content = webView.configuration.userContentController
+        content.removeAllUserScripts()
+        var source = Self.themeScript
+        if let startupScript = startupScript { source += "\n" + startupScript }
+        content.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true))
     }
 
     func userContentController(_ userContentController: WKUserContentController,

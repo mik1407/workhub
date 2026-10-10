@@ -54,14 +54,14 @@ final class RailButton: NSView {
     // Manina al passaggio del mouse: si capisce che è cliccabile.
     override func cursorUpdate(with event: NSEvent) { NSCursor.pointingHand.set() }
 
-    private func updateTint() {
+    func updateTint() {
         imageView.contentTintColor = isActive ? Theme.todoAccent
-            : NSColor.white.withAlphaComponent(hovering ? 0.85 : 0.55)
+            : (hovering ? Theme.railIconHover : Theme.railIcon)
     }
 
     override func draw(_ dirtyRect: NSRect) {
         if isActive || hovering {
-            (isActive ? Theme.railActive : NSColor.white.withAlphaComponent(0.06)).setFill()
+            (isActive ? Theme.railActive : Theme.hoverFill).setFill()
             NSBezierPath(ovalIn: bounds.insetBy(dx: 3, dy: 3)).fill()
         }
         drawProgress()
@@ -93,7 +93,7 @@ final class RailButton: NSView {
         let track = NSBezierPath()
         track.appendArc(withCenter: center, radius: radius, startAngle: 0, endAngle: 360)
         track.lineWidth = 2
-        NSColor.white.withAlphaComponent(0.08).setStroke()
+        Theme.progressTrack.setStroke()
         track.stroke()
         // Vista capovolta: angoli crescenti = senso orario, -90° = in alto.
         let arc = NSBezierPath()

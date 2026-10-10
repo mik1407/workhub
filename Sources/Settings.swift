@@ -41,11 +41,18 @@ struct FocusSettings: Codable, Equatable {
     }
 }
 
+/// Tema dell'app: cornice, barre, pannelli e Impostazioni. I servizi seguono sempre il tema di macOS.
+enum AppearanceMode: String, Codable {
+    case dark, light
+    case system   // segue macOS (chiaro o scuro)
+}
+
 struct AppSettings: Codable, Equatable {
     var version = 1
     var services: [ServiceConfig] = defaultServices
     var notifications = NotificationSettings()
     var focus = FocusSettings()
+    var appearance = AppearanceMode.dark
 
     init() {}
 
@@ -55,6 +62,7 @@ struct AppSettings: Codable, Equatable {
         services = (try? c.decode([ServiceConfig].self, forKey: .services)) ?? defaultServices
         notifications = (try? c.decode(NotificationSettings.self, forKey: .notifications)) ?? NotificationSettings()
         focus = (try? c.decode(FocusSettings.self, forKey: .focus)) ?? FocusSettings()
+        appearance = (try? c.decode(AppearanceMode.self, forKey: .appearance)) ?? .dark
     }
 
     /// Corregge valori non validi (URL non web, id doppi, durate fuori scala).
@@ -80,10 +88,13 @@ struct AppSettings: Codable, Equatable {
 
 /// Impostazioni in ~/Library/Application Support/WorkHub/settings.json.
 final class SettingsStore {
+    /// Unica istanza: il tema va letto all'avvio, prima che barre e pannelli vengano creati.
+    static let shared = SettingsStore()
+
     private(set) var settings: AppSettings
     private let fileURL: URL
 
-    init() {
+    private init() {
         let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("WorkHub", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
