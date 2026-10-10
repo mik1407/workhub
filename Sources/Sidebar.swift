@@ -123,19 +123,39 @@ final class SidebarView: NSView {
     private(set) var tiles: [ServiceTile] = []
     private var footerButton: RailButton?   // in fondo: Impostazioni
 
+    // Le icone scorrono quando non stanno tutte in altezza; la rotella resta fissa in fondo.
+    private let scrollView = NSScrollView()
+    private let tileList = SidebarTileList()
+    private var revealPending = false   // dopo il prossimo layout, scorre fino all'icona selezionata
+
     var selectedIndex = 0 {
         didSet {
             for (i, tile) in tiles.enumerated() { tile.isSelected = (i == selectedIndex) }
-            needsDisplay = true
+            tileList.selected = tiles.indices.contains(selectedIndex) ? tiles[selectedIndex] : nil
+            revealPending = true
+            needsLayout = true
         }
     }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        scrollView.drawsBackground = false
+        scrollView.hasVerticalScroller = false   // si scorre con trackpad o rotella
+        scrollView.verticalScrollElasticity = .none
+        scrollView.horizontalScrollElasticity = .none
+        scrollView.documentView = tileList
+        addSubview(scrollView)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) non usato") }
 
     override var isFlipped: Bool { true }
 
     func setTiles(_ newTiles: [ServiceTile]) {
         tiles.forEach { $0.removeFromSuperview() }
         tiles = newTiles
-        tiles.forEach { addSubview($0) }
+        tiles.forEach { tileList.addSubview($0) }
+        tileList.selected = tiles.indices.contains(selectedIndex) ? tiles[selectedIndex] : nil
         needsLayout = true
     }
 
@@ -148,15 +168,25 @@ final class SidebarView: NSView {
 
     override func layout() {
         super.layout()
+        var listBottom = bounds.height
         if let footer = footerButton {
             let s = RailButton.size
             footer.frame = NSRect(x: (bounds.width - s) / 2, y: bounds.height - s - 14, width: s, height: s)
+            listBottom = footer.frame.minY - 6
         }
+        scrollView.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(0, listBottom))
         let size = ServiceTile.side + ServiceTile.pad * 2
         var y: CGFloat = 6
         for tile in tiles {
             tile.frame = NSRect(x: (bounds.width - size) / 2, y: y, width: size, height: size)
             y += size + 4
+        }
+        tileList.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(y + 2, scrollView.frame.height))
+        tileList.needsDisplay = true
+        if revealPending, tiles.indices.contains(selectedIndex) {
+            revealPending = false
+            let tile = tiles[selectedIndex]
+            _ = tile.scrollToVisible(tile.bounds)
         }
         needsDisplay = true
     }
@@ -164,8 +194,17 @@ final class SidebarView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         Theme.sidebar.setFill()
         NSBezierPath(rect: bounds).fill()
-        guard tiles.indices.contains(selectedIndex) else { return }
-        let f = tiles[selectedIndex].frame
+    }
+}
+
+/// Contenuto scorrevole della sidebar: le icone e l'indicatore del servizio attivo, che scorre con loro.
+private final class SidebarTileList: NSView {
+    weak var selected: NSView? { didSet { needsDisplay = true } }
+
+    override var isFlipped: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let f = selected?.frame else { return }
         Theme.accent.setFill()
         NSBezierPath(roundedRect: NSRect(x: -3, y: f.midY - 18, width: 6, height: 36),
                      xRadius: 3, yRadius: 3).fill()

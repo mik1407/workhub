@@ -292,10 +292,13 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     }
 
     // Microfono/fotocamera (huddle Slack, note vocali WhatsApp). macOS chiede comunque il permesso la prima volta.
+    // Senza domande solo al servizio stesso; per altri siti (script di terze parti, reindirizzamenti)
+    // WebKit chiede conferma.
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
                  initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
                  decisionHandler: @escaping (WKPermissionDecision) -> Void) {
-        decisionHandler(.grant)
+        let ownService = origin.protocol == "https" && baseDomain(origin.host) == baseDomain(config.url.host)
+        decisionHandler(ownService ? .grant : .prompt)
     }
 
     // MARK: - Download (in ~/Downloads)
