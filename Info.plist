@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key><string>local.workhub</string>
+    <key>CFBundleName</key><string>WorkHub</string>
+    <key>CFBundleDisplayName</key><string>WorkHub</string>
+    <key>CFBundleExecutable</key><string>WorkHub</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>1.1</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>NSHumanReadableCopyright</key><string>WorkHub — uso personale</string>
+    <key>LSMinimumSystemVersion</key><string>12.0</string>
+    <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSAppSleepDisabled</key><true/>
+    <key>NSMicrophoneUsageDescription</key><string>Serve per huddle Slack e note vocali WhatsApp.</string>
+    <key>NSCameraUsageDescription</key><string>Serve per le videochiamate dentro i servizi.</string>
+</dict>
+</plist>

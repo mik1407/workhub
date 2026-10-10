@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<style>
+  :root {
+    --bg: #0a1120;
+    --surface: #111a2c;
+    --surface-2: #1b2740;
+    --hover: rgba(255, 255, 255, 0.045);
+    --line: rgba(255, 255, 255, 0.06);
+    --text: #e8ecf3;
+    --muted: #8b97ad;
+    --faint: #5d6a82;
+    --accent: #2f9be9;
+    --accent-soft: rgba(47, 155, 233, 0.14);
+    --danger: #ff6b5e;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font: 13.5px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: default; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg { display: block; }
+
+  /* Navigazione */
+  nav { flex: none; width: 196px; padding: 18px 10px; border-right: 1px solid var(--line); }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 10px;
+    border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13.5px; text-align: left;
+  }
+  .nav-item svg { width: 16px; height: 16px; flex: none; }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.active { background: var(--surface-2); color: var(--text); }
+
+  main { flex: 1; min-width: 0; overflow-y: auto; padding: 22px 26px 30px; }
+  section[hidden] { display: none; }
+  .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; }
+  .subtitle { margin-top: 3px; color: var(--muted); font-size: 12.5px; }
+
+  /* Controlli */
+  .btn {
+    flex: none; height: 30px; padding: 0 12px; border: 0; border-radius: 8px;
+    background: var(--surface-2); font-size: 13px; font-weight: 500;
+  }
+  .btn:hover { filter: brightness(1.15); }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn.danger { background: rgba(255, 107, 94, 0.12); color: var(--danger); }
+  .btn.danger.armed { background: var(--danger); color: #fff; }
+  .btn:disabled { opacity: 0.4; filter: none; }
+  .field {
+    width: 100%; height: 32px; padding: 0 10px; border: 0; border-radius: 8px;
+    background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); outline: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  .field:focus { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .field.invalid { box-shadow: inset 0 0 0 1.5px var(--danger); }
+  select.field { -webkit-appearance: none; appearance: none; padding-right: 28px;
+    background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b97ad' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 10px center; }
+  .switch {
+    position: relative; flex: none; width: 36px; height: 21px; padding: 0; border: 0; border-radius: 11px;
+    background: #2a3550; transition: background-color 0.2s;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); transition: transform 0.2s;
+  }
+  .switch[aria-checked="true"] { background: var(--accent); }
+  .switch[aria-checked="true"]::after { transform: translateX(15px); }
+  .switch:disabled { opacity: 0.35; }
+
+  .card { padding: 4px 16px; border-radius: 12px; background: var(--surface); margin-bottom: 14px; }
+  .row { display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .label { flex: 1; min-width: 0; }
+  .row .label strong { display: block; font-weight: 500; }
+  .row .label span { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .row select.field { width: auto; min-width: 150px; }
+
+  /* Servizi */
+  .services { display: grid; grid-template-columns: minmax(220px, 280px) 1fr; gap: 16px; align-items: start; }
+  .list { padding: 6px; border-radius: 12px; background: var(--surface); }
+  .svc {
+    position: relative; display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 10px 0 8px;
+    border-radius: 9px;
+  }
+  .svc:hover { background: var(--hover); }
+  .svc.selected { background: var(--surface-2); }
+  .svc .grip { width: 8px; color: var(--faint); opacity: 0; flex: none; }
+  .svc:hover .grip { opacity: 1; }
+  .svc .meta { flex: 1; min-width: 0; }
+  .svc .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .svc .host { color: var(--faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .svc .key { color: var(--faint); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .svc.placeholder { background: var(--accent-soft); box-shadow: inset 0 0 0 1px rgba(47, 155, 233, 0.45); }
+  .svc.placeholder > * { visibility: hidden; }
+  .ghost {
+    position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none;
+    background: var(--surface-2); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  }
+  body.dragging, body.dragging * { cursor: grabbing !important; }
+  .avatar {
+    flex: none; width: 28px; height: 28px; border-radius: 8px; overflow: hidden;
+    display: grid; place-items: center; font-weight: 600; font-size: 13px; color: #fff;
+  }
+  .avatar img { width: 100%; height: 100%; display: block; }
+  .avatar.big { width: 52px; height: 52px; border-radius: 14px; font-size: 22px; }
+
+  .detail { padding: 18px; border-radius: 12px; background: var(--surface); }
+  .detail-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .detail-head .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .form { display: grid; gap: 12px; }
+  .form label { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .error { color: var(--danger); font-size: 12px; min-height: 0; }
+  .inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; }
+  .inline span { color: var(--text); font-size: 13.5px; font-weight: 400; }
+  .danger-zone { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+  /* Catalogo */
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+    background: rgba(3, 7, 15, 0.6);
+  }
+  .sheet-backdrop[hidden] { display: none; }
+  .sheet {
+    width: min(620px, calc(100vw - 60px)); max-height: calc(100vh - 60px); overflow: auto;
+    padding: 20px; border-radius: 14px; background: var(--surface);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--line);
+  }
+  .sheet h2 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+  .catalog { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 18px; }
+  .item {
+    display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 10px; border: 0; border-radius: 10px;
+    background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); text-align: left;
+  }
+  .item:hover:not(:disabled) { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .item:disabled { opacity: 0.45; }
+  .item .meta { min-width: 0; }
+  .item .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .host { color: var(--faint); font-size: 11.5px; }
+  .custom { display: grid; grid-template-columns: 1fr 1.6fr auto; gap: 8px; align-items: center; }
+  .sheet-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+  /* Notifiche */
+  .row .label strong.status { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fca8e; flex: none; }
+  .dot.paused { background: #f2b84b; }
+  table { width: 100%; border-collapse: collapse; }
+  th { color: var(--muted); font-size: 12px; font-weight: 500; text-align: center; padding: 10px 6px; }
+  th:first-child, td:first-child { text-align: left; }
+  td { padding: 8px 6px; border-top: 1px solid var(--line); text-align: center; }
+  td .switch { display: inline-block; vertical-align: middle; }
+  .svc-cell { display: flex; align-items: center; gap: 10px; }
+  .muted-col { opacity: 0.35; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--surface-2); }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+  <nav aria-label="Settings sections">
+    <button class="nav-item active" data-tab="services" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+      Services
+    </button>
+    <button class="nav-item" data-tab="notifications" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      Notifications
+    </button>
+    <button class="nav-item" data-tab="focus" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M9.5 2.5h5M12 2.5V6M12 13.5V9.5"/></svg>
+      Focus
+    </button>
+  </nav>
+
+  <main>
+    <!-- SERVICES -->
+    <section id="tab-services">
+      <div class="title-row">
+        <div>
+          <h1>Services</h1>
+          <div class="subtitle">Drag to reorder. The order is the sidebar order and the ⌘1–9 shortcuts.</div>
+        </div>
+        <button class="btn primary" id="add-service" type="button">Add service</button>
+      </div>
+      <div class="services">
+        <div class="list" id="svc-list"></div>
+        <div class="detail" id="svc-detail"></div>
+      </div>
+    </section>
+
+    <!-- NOTIFICATIONS -->
+    <section id="tab-notifications" hidden>
+      <div class="title-row"><div><h1>Notifications</h1>
+        <div class="subtitle">When and how services can notify you.</div></div></div>
+      <div class="card">
+        <div class="row">
+          <div class="label"><strong class="status"><i class="dot" id="pause-dot"></i><span id="pause-status">Notifications are on</span></strong>
+            <span>Pause all services at once. Badges keep updating.</span></div>
+          <div id="pause-actions" style="display:flex; gap:8px"></div>
+        </div>
+        <div class="row">
+          <div class="label"><strong>Hide message content</strong>
+            <span>Notifications show only the service name. Useful when sharing your screen.</span></div>
+          <button class="switch" id="hide-content" type="button" role="switch" aria-label="Hide message content"></button>
+        </div>
+        <div class="row">
+          <div class="label"><strong>Silence during focus</strong>
+            <span>During focus sessions only the services you allow below can notify you.</span></div>
+          <button class="switch" id="silence-focus" type="button" role="switch" aria-label="Silence during focus"></button>
+        </div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Service</th><th>Notifications</th><th>Sound</th><th id="during-head">Allowed during focus</th></tr></thead>
+          <tbody id="notif-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOCUS -->
+    <section id="tab-focus" hidden>
+      <div class="title-row"><div><h1>Focus</h1>
+        <div class="subtitle">Pomodoro timer settings. Changes apply from the next phase.</div></div></div>
+      <div class="card">
+        <div class="row"><div class="label"><strong>Focus session</strong></div>
+          <select class="field" id="focus-minutes"></select></div>
+        <div class="row"><div class="label"><strong>Break</strong></div>
+          <select class="field" id="break-minutes"></select></div>
+        <div class="row"><div class="label"><strong>Long break</strong><span>A longer pause after a few sessions.</span></div>
+          <select class="field" id="long-every"></select>
+          <select class="field" id="long-minutes"></select></div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div class="label"><strong>Start the next phase automatically</strong>
+            <span>When off, the timer waits for your click at the end of each phase.</span></div>
+          <button class="switch" id="auto-start" type="button" role="switch" aria-label="Start automatically"></button>
+        </div>
+        <div class="row">
+          <div class="label"><strong>Sound at the end of each phase</strong>
+            <span>A short chime in addition to the notification.</span></div>
+          <button class="switch" id="chime" type="button" role="switch" aria-label="Chime"></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Catalogo servizi -->
+  <div class="sheet-backdrop" id="sheet" hidden>
+    <div class="sheet" role="dialog" aria-label="Add service">
+      <h2>Add service</h2>
+      <input class="field" id="catalog-search" placeholder="Search" autocomplete="off" spellcheck="false">
+      <div class="catalog" id="catalog"></div>
+      <div class="form">
+        <label>Other website</label>
+        <div class="custom">
+          <input class="field" id="custom-name" placeholder="Name" autocomplete="off" spellcheck="false">
+          <input class="field" id="custom-url" placeholder="https://…" autocomplete="off" spellcheck="false">
+          <button class="btn primary" id="custom-add" type="button">Add</button>
+        </div>
+        <div class="error" id="custom-error"></div>
+      </div>
+      <div class="sheet-foot"><button class="btn" id="sheet-close" type="button">Done</button></div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  // Stato inviato dall'app (valori iniziali di riserva)
+  let S = { version: 1, services: [], notifications: {}, focus: { focusMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, longBreakEvery: 0, autoStart: true, chime: false } };
+  let X = { catalog: [], icons: {}, customIcons: [] };
+  let tab = 'services';
+  let selectedId = null;
+  let drag = null;
+
+  const BADGES = [['title', 'Number in page title'], ['gmail', 'Gmail inbox count'], ['slack', 'Slack unread'], ['none', 'No badge']];
+
+  const send = (message) => { try { window.webkit.messageHandlers.settings.postMessage(message); } catch (_) {} };
+  const save = () => send({ action: 'save', settings: JSON.stringify(S) });
+  const host = (url) => { try { return new URL(url).host; } catch (_) { return url; } };
+  const baseDomain = (url) => host(url).toLowerCase().split('.').slice(-2).join('.');
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (tag === 'button') e.type = 'button'; return e; };
+
+  function normalizeURL(value) {
+    let v = (value || '').trim();
+    if (!v) return null;
+    if (!/^[a-z]+:\/\//i.test(v)) v = 'https://' + v;
+    try {
+      const u = new URL(v);
+      if ((u.protocol !== 'https:' && u.protocol !== 'http:') || !u.hostname.includes('.')) return null;
+      return u.href;
+    } catch (_) { return null; }
+  }
+
+  function avatar(service, big) {
+    const box = el('div', 'avatar' + (big ? ' big' : ''));
+    const icon = X.icons[service.id];
+    if (icon) {
+      const img = document.createElement('img');
+      img.src = icon;
+      img.alt = '';
+      box.append(img);
+    } else {
+      let h = 0;
+      for (const c of service.name) h = (h * 31 + c.charCodeAt(0)) % 360;
+      box.style.background = `hsl(${h} 42% 36%)`;
+      box.textContent = (service.name[0] || '?').toUpperCase();
+    }
+    return box;
+  }
+
+  function switchEl(button, on, disabled) {
+    button.setAttribute('aria-checked', String(!!on));
+    button.disabled = !!disabled;
+  }
+
+  // ---------- Navigazione ----------
+  document.querySelectorAll('.nav-item').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; render(); }));
+
+  function render() {
+    document.querySelectorAll('.nav-item').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+    for (const name of ['services', 'notifications', 'focus']) $('tab-' + name).hidden = name !== tab;
+    if (tab === 'services') renderServices();
+    if (tab === 'notifications') renderNotifications();
+    if (tab === 'focus') renderFocus();
+  }
+
+  // ---------- Services ----------
+  function renderServices() {
+    if (!S.services.some((s) => s.id === selectedId)) selectedId = S.services[0] ? S.services[0].id : null;
+    const list = $('svc-list');
+    list.textContent = '';
+    S.services.forEach((service, i) => {
+      const row = el('div', 'svc' + (service.id === selectedId ? ' selected' : ''));
+      row.dataset.id = service.id;
+      const grip = el('span', 'grip');
+      grip.innerHTML = '<svg viewBox="0 0 8 14" fill="currentColor"><circle cx="2" cy="2" r="1.2"/><circle cx="6" cy="2" r="1.2"/><circle cx="2" cy="7" r="1.2"/><circle cx="6" cy="7" r="1.2"/><circle cx="2" cy="12" r="1.2"/><circle cx="6" cy="12" r="1.2"/></svg>';
+      const meta = el('div', 'meta');
+      meta.append(el('div', 'name', service.name), el('div', 'host', host(service.url)));
+      row.append(grip, avatar(service), meta, el('span', 'key', i < 9 ? `⌘${i + 1}` : ''));
+      list.append(row);
+    });
+    renderDetail();
+  }
+
+  function renderDetail() {
+    const box = $('svc-detail');
+    box.textContent = '';
+    const service = S.services.find((s) => s.id === selectedId);
+    if (!service) { box.append(el('div', 'note', 'No services. Add one to get started.')); return; }
+
+    const head = el('div', 'detail-head');
+    const actions = el('div', 'actions');
+    const change = el('button', 'btn', 'Change icon…');
+    change.addEventListener('click', () => send({ action: 'changeIcon', id: service.id }));
+    actions.append(change);
+    if (X.customIcons.includes(service.id)) {
+      const reset = el('button', 'btn', 'Use website icon');
+      reset.addEventListener('click', () => send({ action: 'resetIcon', id: service.id }));
+      actions.append(reset);
+    }
+    head.append(avatar(service, true), actions);
+
+    const form = el('div', 'form');
+    const nameLabel = el('label', null, 'Name');
+    const name = el('input', 'field');
+    name.value = service.name;
+    name.spellcheck = false;
+    name.addEventListener('change', () => {
+      const v = name.value.trim();
+      if (!v) { name.value = service.name; return; }
+      service.name = v;
+      save();
+      renderServices();
+    });
+    nameLabel.append(name);
+
+    const urlLabel = el('label', null, 'Address');
+    const url = el('input', 'field');
+    url.value = service.url;
+    url.spellcheck = false;
+    const urlError = el('div', 'error');
+    url.addEventListener('change', () => {
+      const v = normalizeURL(url.value);
+      if (!v) { url.classList.add('invalid'); urlError.textContent = 'Enter a web address, for example https://mail.google.com'; return; }
+      url.classList.remove('invalid');
+      urlError.textContent = '';
+      if (v !== service.url) { service.url = v; save(); renderServices(); }
+    });
+    urlLabel.append(url, urlError);
+
+    const badgeLabel = el('label', null, 'Unread badge');
+    const badge = el('select', 'field');
+    for (const [value, label] of BADGES) {
+      const o = el('option', null, label);
+      o.value = value;
+      badge.append(o);
+    }
+    badge.value = service.badge;
+    badge.addEventListener('change', () => { service.badge = badge.value; save(); });
+    badgeLabel.append(badge);
+
+    const dockRow = el('div', 'inline');
+    dockRow.append(el('span', null, 'Count in the Dock badge'));
+    const dock = el('button', 'switch');
+    dock.setAttribute('role', 'switch');
+    switchEl(dock, service.countInDock);
+    dock.addEventListener('click', () => { service.countInDock = !service.countInDock; save(); renderDetail(); });
+    dockRow.append(dock);
+
+    form.append(nameLabel, urlLabel, badgeLabel, dockRow);
+
+    const zone = el('div', 'danger-zone');
+    const signOut = armedButton('Sign out and reset data', 'Click again to sign out', () => send({ action: 'resetData', id: service.id }));
+    const remove = armedButton('Remove service', 'Click again to remove', () => {
+      S.services = S.services.filter((s) => s.id !== service.id);
+      selectedId = null;
+      save();
+      renderServices();
+    });
+    remove.disabled = S.services.length < 2;
+    zone.append(signOut, remove);
+
+    const shared = S.services.filter((s) => s.id !== service.id && baseDomain(s.url) === baseDomain(service.url));
+    box.append(head, form, zone);
+    if (shared.length) {
+      box.append(el('div', 'note', `Signing out also signs you out of ${shared.map((s) => s.name).join(', ')}: they share the same account.`));
+    }
+  }
+
+  function armedButton(label, confirmLabel, action) {
+    const b = el('button', 'btn danger', label);
+    let armed = false;
+    b.addEventListener('click', () => {
+      if (!armed) {
+        armed = true;
+        b.classList.add('armed');
+        b.textContent = confirmLabel;
+        setTimeout(() => { armed = false; b.classList.remove('armed'); b.textContent = label; }, 4000);
+        return;
+      }
+      action();
+    });
+    return b;
+  }
+
+  // Selezione e riordino con trascinamento
+  $('svc-list').addEventListener('mousedown', (e) => {
+    const row = e.target.closest && e.target.closest('.svc');
+    if (!row || e.button !== 0) return;
+    drag = { id: row.dataset.id, row, startY: e.clientY, startX: e.clientX, active: false };
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!drag) return;
+    if (e.buttons === 0) { endDrag(); return; }
+    if (!drag.active) {
+      if (Math.abs(e.clientY - drag.startY) + Math.abs(e.clientX - drag.startX) < 5) return;
+      const r = drag.row.getBoundingClientRect();
+      drag.active = true;
+      drag.offsetX = drag.startX - r.left;
+      drag.offsetY = drag.startY - r.top;
+      drag.ghost = drag.row.cloneNode(true);
+      drag.ghost.classList.add('ghost');
+      drag.ghost.style.width = r.width + 'px';
+      document.body.append(drag.ghost);
+      drag.row.classList.add('placeholder');
+      document.body.classList.add('dragging');
+    }
+    drag.ghost.style.transform = `translate(${e.clientX - drag.offsetX}px, ${e.clientY - drag.offsetY}px)`;
+    const list = $('svc-list');
+    const rows = Array.from(list.querySelectorAll('.svc')).filter((n) => n !== drag.row);
+    const before = rows.find((n) => { const r = n.getBoundingClientRect(); return e.clientY < r.top + r.height / 2; });
+    if (before) { if (drag.row.nextElementSibling !== before) list.insertBefore(drag.row, before); }
+    else if (rows.length && rows[rows.length - 1].nextElementSibling !== drag.row) rows[rows.length - 1].after(drag.row);
+  });
+  document.addEventListener('mouseup', () => { if (drag) endDrag(); });
+
+  function endDrag() {
+    const d = drag;
+    drag = null;
+    if (!d.active) {                       // semplice click: seleziona
+      selectedId = d.id;
+      renderServices();
+      return;
+    }
+    d.ghost.remove();
+    document.body.classList.remove('dragging');
+    const order = Array.from($('svc-list').querySelectorAll('.svc')).map((n) => n.dataset.id);
+    const byId = new Map(S.services.map((s) => [s.id, s]));
+    const reordered = order.map((id) => byId.get(id)).filter(Boolean);
+    const changed = reordered.some((s, i) => s !== S.services[i]);
+    S.services = reordered;
+    if (changed) save();
+    renderServices();
+  }
+
+  // ---------- Catalogo ----------
+  $('add-service').addEventListener('click', () => {
+    $('sheet').hidden = false;
+    $('catalog-search').value = '';
+    $('custom-name').value = '';
+    $('custom-url').value = '';
+    $('custom-error').textContent = '';
+    renderCatalog();
+    $('catalog-search').focus();
+  });
+  $('sheet-close').addEventListener('click', () => { $('sheet').hidden = true; });
+  $('sheet').addEventListener('mousedown', (e) => { if (e.target === $('sheet')) $('sheet').hidden = true; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('sheet').hidden = true; });
+  $('catalog-search').addEventListener('input', renderCatalog);
+
+  function renderCatalog() {
+    const q = $('catalog-search').value.trim().toLowerCase();
+    const box = $('catalog');
+    box.textContent = '';
+    const added = new Set(S.services.map((s) => s.id));
+    const items = X.catalog.filter((c) => !q || c.name.toLowerCase().includes(q) || host(c.url).includes(q));
+    if (!items.length) box.append(el('div', 'note', 'No matches. Add it as another website below.'));
+    for (const item of items) {
+      const b = el('button', 'item');
+      const meta = el('div', 'meta');
+      meta.append(el('div', 'name', item.name), el('div', 'host', added.has(item.id) ? 'Added' : host(item.url)));
+      b.append(avatar({ id: '__catalog_' + item.id, name: item.name }), meta);
+      b.disabled = added.has(item.id);
+      b.addEventListener('click', () => addService({ id: item.id, name: item.name, url: item.url, badge: item.badge }));
+      box.append(b);
+    }
+  }
+
+  $('custom-add').addEventListener('click', () => {
+    const url = normalizeURL($('custom-url').value);
+    if (!url) { $('custom-error').textContent = 'Enter a web address, for example https://app.asana.com'; return; }
+    const name = $('custom-name').value.trim() || host(url).replace(/^www\./, '');
+    addService({ id: 'custom-' + Date.now().toString(36), name, url, badge: 'title' });
+  });
+
+  function addService(base) {
+    S.services.push({ countInDock: true, notify: true, sound: true, allowDuringFocus: false, ...base });
+    selectedId = base.id;
+    $('sheet').hidden = true;
+    tab = 'services';
+    save();
+    render();
+  }
+
+  // ---------- Notifications ----------
+  function pausedUntil() {
+    const until = S.notifications.pausedUntil;
+    return until && until * 1000 > Date.now() ? new Date(until * 1000) : null;
+  }
+
+  function renderNotifications() {
+    const n = S.notifications;
+    const until = pausedUntil();
+    $('pause-dot').classList.toggle('paused', !!until);
+    if (until) {
+      const sameDay = until.toDateString() === new Date().toDateString();
+      const time = until.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      $('pause-status').textContent = `Paused until ${sameDay ? time : 'tomorrow at ' + time}`;
+    } else {
+      $('pause-status').textContent = 'Notifications are on';
+    }
+    const actions = $('pause-actions');
+    actions.textContent = '';
+    if (until) {
+      const resume = el('button', 'btn primary', 'Resume');
+      resume.addEventListener('click', () => { delete S.notifications.pausedUntil; save(); renderNotifications(); });
+      actions.append(resume);
+    } else {
+      const hour = el('button', 'btn', '1 hour');
+      hour.addEventListener('click', () => pauseUntil(new Date(Date.now() + 3600 * 1000)));
+      const tomorrow = el('button', 'btn', 'Until tomorrow');
+      tomorrow.addEventListener('click', () => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        d.setHours(8, 0, 0, 0);
+        pauseUntil(d);
+      });
+      actions.append(hour, tomorrow);
+    }
+    switchEl($('hide-content'), n.hideContent);
+    switchEl($('silence-focus'), n.silenceDuringFocus);
+    $('during-head').classList.toggle('muted-col', !n.silenceDuringFocus);
+
+    const body = $('notif-table');
+    body.textContent = '';
+    for (const service of S.services) {
+      const tr = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const wrap = el('div', 'svc-cell');
+      wrap.append(avatar(service), el('span', null, service.name));
+      nameCell.append(wrap);
+      tr.append(nameCell,
+        cellSwitch(service, 'notify'),
+        cellSwitch(service, 'sound', !service.notify),
+        cellSwitch(service, 'allowDuringFocus', !service.notify || !n.silenceDuringFocus));
+      body.append(tr);
+    }
+  }
+
+  function cellSwitch(service, key, disabled) {
+    const td = document.createElement('td');
+    const b = el('button', 'switch');
+    b.setAttribute('role', 'switch');
+    b.setAttribute('aria-label', `${service.name} ${key}`);
+    switchEl(b, service[key], disabled);
+    b.addEventListener('click', () => { service[key] = !service[key]; save(); renderNotifications(); });
+    td.append(b);
+    return td;
+  }
+
+  function pauseUntil(date) {
+    S.notifications.pausedUntil = Math.floor(date.getTime() / 1000);
+    save();
+    renderNotifications();
+  }
+
+  $('hide-content').addEventListener('click', () => { S.notifications.hideContent = !S.notifications.hideContent; save(); renderNotifications(); });
+  $('silence-focus').addEventListener('click', () => { S.notifications.silenceDuringFocus = !S.notifications.silenceDuringFocus; save(); renderNotifications(); });
+  setInterval(() => { if (tab === 'notifications') renderNotifications(); }, 30000);   // la pausa scade da sola
+
+  // ---------- Focus ----------
+  function fillSelect(select, values, format, current) {
+    select.textContent = '';
+    const all = values.includes(current) ? values : [...values, current].sort((a, b) => a - b);
+    for (const v of all) {
+      const o = el('option', null, format(v));
+      o.value = String(v);
+      select.append(o);
+    }
+    select.value = String(current);
+  }
+
+  function renderFocus() {
+    const f = S.focus;
+    fillSelect($('focus-minutes'), [15, 20, 25, 30, 40, 45, 50, 60, 90], (v) => `${v} minutes`, f.focusMinutes);
+    fillSelect($('break-minutes'), [3, 5, 10, 15], (v) => `${v} minutes`, f.breakMinutes);
+    fillSelect($('long-every'), [0, 2, 3, 4, 5, 6], (v) => (v ? `Every ${v} sessions` : 'Off'), f.longBreakEvery);
+    fillSelect($('long-minutes'), [10, 15, 20, 25, 30], (v) => `${v} minutes`, f.longBreakMinutes);
+    $('long-minutes').disabled = !f.longBreakEvery;
+    $('long-minutes').style.opacity = f.longBreakEvery ? '1' : '0.4';
+    switchEl($('auto-start'), f.autoStart);
+    switchEl($('chime'), f.chime);
+  }
+
+  const numberSetting = (id, key) => $(id).addEventListener('change', (e) => { S.focus[key] = Number(e.target.value); save(); renderFocus(); });
+  numberSetting('focus-minutes', 'focusMinutes');
+  numberSetting('break-minutes', 'breakMinutes');
+  numberSetting('long-every', 'longBreakEvery');
+  numberSetting('long-minutes', 'longBreakMinutes');
+  $('auto-start').addEventListener('click', () => { S.focus.autoStart = !S.focus.autoStart; save(); renderFocus(); });
+  $('chime').addEventListener('click', () => { S.focus.chime = !S.focus.chime; save(); renderFocus(); });
+
+  // ---------- Dall'app ----------
+  window.settingsUpdate = (payload) => {
+    if (payload.settings) {
+      S = payload.settings;
+      S.notifications = S.notifications || {};
+      S.focus = S.focus || {};
+      S.services = S.services || [];
+    }
+    if (payload.extra) X = Object.assign(X, payload.extra);
+    if (!$('sheet').hidden) renderCatalog();
+    render();
+  };
+
+  // File trascinati da fuori: ignorati
+  document.addEventListener('dragover', (e) => e.preventDefault());
+  document.addEventListener('drop', (e) => e.preventDefault());
+
+  render();
+})();
+</script>
+</body>
+</html>
