@@ -23,7 +23,19 @@ final class TodoPanel {
         fileURL = folder.appendingPathComponent("todos.json")
 
         // I dati salvati arrivano alla pagina prima che parta il suo script.
-        let saved = (try? String(contentsOf: fileURL, encoding: .utf8)) ?? "null"
+        var saved = (try? String(contentsOf: fileURL, encoding: .utf8)) ?? "null"
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            if Self.isReadable(saved) {
+                // Copia di sicurezza dello stato all'avvio: todos.json.bak
+                let backup = folder.appendingPathComponent("todos.json.bak")
+                try? FileManager.default.removeItem(at: backup)
+                try? FileManager.default.copyItem(at: fileURL, to: backup)
+            } else {
+                // La pagina partirebbe vuota e al primo salvataggio sovrascriverebbe il file: lo mette da parte.
+                keepBrokenCopy(of: fileURL)
+                saved = "null"
+            }
+        }
         lastState = saved
         panel = LocalPanel(page: "todos", handler: "todos",
                            startupScript: "window.__todoData = \(LocalPanel.jsString(saved));")
@@ -54,6 +66,13 @@ final class TodoPanel {
     /// Azione dalla notifica: "done" oppure "snooze" (un'ora).
     func apply(_ action: String, to id: String) {
         runWhenLoaded("window.todosApply && window.todosApply({id: \(LocalPanel.jsString(id)), action: \(LocalPanel.jsString(action))})")
+    }
+
+    /// Lo stesso controllo della pagina: un oggetto JSON con l'elenco "todos".
+    private static func isReadable(_ json: String) -> Bool {
+        guard let data = json.data(using: .utf8),
+              let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return false }
+        return object["todos"] is [Any]
     }
 
     /// Se l'app è stata aperta da una notifica la pagina potrebbe non essere ancora pronta.

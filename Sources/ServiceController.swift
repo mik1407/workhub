@@ -78,7 +78,10 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
             tile?.badgeDot = dot
             app?.badgesChanged()
         case "hubNotify":
-            guard let json = message.body as? String,
+            // Solo dal servizio (anche dai suoi iframe, es. la chat dentro Gmail): un iframe di un altro sito
+            // (pubblicità, contenuti incorporati) non può mandare notifiche a nome del servizio.
+            guard baseDomain(message.frameInfo.securityOrigin.host) == baseDomain(config.url.host),
+                  let json = message.body as? String,
                   let data = json.data(using: .utf8),
                   let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return }
             handleNotification(object)

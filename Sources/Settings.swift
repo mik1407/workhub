@@ -59,7 +59,9 @@ struct AppSettings: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         version = (try? c.decode(Int.self, forKey: .version)) ?? 1
-        services = (try? c.decode([ServiceConfig].self, forKey: .services)) ?? defaultServices
+        // Un servizio alla volta: uno malformato viene scartato, gli altri restano.
+        services = (try? c.decode([Lenient<ServiceConfig>].self, forKey: .services))?.compactMap { $0.value }
+            ?? defaultServices
         notifications = (try? c.decode(NotificationSettings.self, forKey: .notifications)) ?? NotificationSettings()
         focus = (try? c.decode(FocusSettings.self, forKey: .focus)) ?? FocusSettings()
         appearance = (try? c.decode(AppearanceMode.self, forKey: .appearance)) ?? .dark
@@ -78,12 +80,28 @@ struct AppSettings: Codable, Equatable {
             fixed.name = name.isEmpty ? (service.url.host ?? service.id) : String(name.prefix(40))
             return fixed
         }
+        if copy.services.isEmpty { copy.services = defaultServices }   // la sidebar non resta mai vuota
         copy.focus.focusMinutes = min(max(focus.focusMinutes, 1), 180)
         copy.focus.breakMinutes = min(max(focus.breakMinutes, 1), 60)
         copy.focus.longBreakMinutes = min(max(focus.longBreakMinutes, 1), 90)
         copy.focus.longBreakEvery = min(max(focus.longBreakEvery, 0), 12)
         return copy
     }
+}
+
+/// Legge un elemento di una lista senza far fallire tutta la lista: se è malformato, value è nil.
+private struct Lenient<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: Decoder) throws { value = try? T(from: decoder) }
+}
+
+/// Copia un file di dati che non si riesce a leggere accanto all'originale
+/// (es. settings-broken-2026-10-11-093012.json), così non va perso quando l'app lo riscrive.
+func keepBrokenCopy(of url: URL) {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd-HHmmss"
+    let name = "\(url.deletingPathExtension().lastPathComponent)-broken-\(formatter.string(from: Date())).\(url.pathExtension)"
+    try? FileManager.default.copyItem(at: url, to: url.deletingLastPathComponent().appendingPathComponent(name))
 }
 
 /// Impostazioni in ~/Library/Application Support/WorkHub/settings.json.
@@ -99,9 +117,15 @@ final class SettingsStore {
             .appendingPathComponent("WorkHub", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         fileURL = folder.appendingPathComponent("settings.json")
-        if let data = try? Data(contentsOf: fileURL),
-           let saved = try? JSONDecoder().decode(AppSettings.self, from: data) {
-            settings = saved.sanitized()
+        if let data = try? Data(contentsOf: fileURL) {
+            if let saved = try? JSONDecoder().decode(AppSettings.self, from: data) {
+                settings = saved.sanitized()
+            } else {
+                // File illeggibile (es. modificato a mano): si riparte dai valori iniziali,
+                // ma l'originale resta da parte invece di essere sovrascritto al primo salvataggio.
+                keepBrokenCopy(of: fileURL)
+                settings = AppSettings()
+            }
         } else {
             settings = AppSettings()
         }

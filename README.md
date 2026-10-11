@@ -64,6 +64,8 @@ Pannello a destra con due liste: Personal e Work.
 - Alla scadenza arriva una notifica macOS (anche con WorkHub chiusa) con "Mark as done" e
   "Remind me in 1 hour"; cliccandola si apre il pannello sul todo. L'icona Todos mostra quanti sono scaduti.
 - Dati: `~/Library/Application Support/WorkHub/todos.json`, salvati a ogni modifica.
+  A ogni avvio una copia va in `todos.json.bak`. Se il file non si legge, l'app parte con la lista vuota
+  e conserva l'originale come `todos-broken-<data>.json`.
 
 ## Focus
 
@@ -95,6 +97,8 @@ Timer Pomodoro nella barra destra: 25 minuti di focus, 5 di pausa, e si ripete f
   I servizi non cambiano: seguono sempre il tema di macOS.
 
 Tutto si applica subito e viene salvato in `~/Library/Application Support/WorkHub/settings.json`.
+Se lo modifichi a mano, un servizio scritto male viene ignorato (gli altri restano); se il file intero non si legge,
+l'app riparte dalle impostazioni iniziali e conserva l'originale come `settings-broken-<data>.json`.
 Altre cartelle utili: `icons/` (icone personalizzate), `Sounds/` (suoni del Focus), `todos.json`.
 
 Avvio automatico: menu WorkHub > "Apri all'avvio del Mac". Per tenerla nel Dock: click destro sull'icona >
