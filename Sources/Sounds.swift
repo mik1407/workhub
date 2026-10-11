@@ -143,7 +143,7 @@ final class AmbientPlayer {
             attached = true
         }
         if connectedFormat != buffer.format {
-            engine.connect(player, to: engine.mainMixerNode, format: buffer.format)
+            guard connectPlayer(format: buffer.format) else { playing = false; return }
             connectedFormat = buffer.format
         }
         if !engine.isRunning {
@@ -152,8 +152,25 @@ final class AmbientPlayer {
         currentURL = url
         player.volume = 0
         player.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
-        player.play()
+        guard startPlayer() else { playing = false; return }
         fade(to: volume, over: 1.5, then: nil)
+    }
+
+    // Da macOS 27 le API segnalano gli errori; prima si usano quelle precedenti (l'app parte da macOS 12).
+    private func connectPlayer(format: AVAudioFormat) -> Bool {
+        if #available(macOS 27.0, *) {
+            return (try? engine.connectNode(player, to: engine.mainMixerNode, format: format)) != nil
+        }
+        engine.connect(player, to: engine.mainMixerNode, format: format)
+        return true
+    }
+
+    private func startPlayer() -> Bool {
+        if #available(macOS 27.0, *) {
+            return (try? player.playAudio()) != nil
+        }
+        player.play()
+        return true
     }
 
     private func load(_ url: URL, completion: @escaping (AVAudioPCMBuffer?) -> Void) {
@@ -162,9 +179,9 @@ final class AmbientPlayer {
             return
         }
         // Decodifica fuori dal thread principale: l'interfaccia non si blocca.
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let buffer = AmbientPlayer.decodeLoop(url)
-            DispatchQueue.main.async { [weak self] in
+            DispatchQueue.main.async {
                 if let buffer = buffer { self?.cached = (url, buffer) }
                 completion(buffer)
             }
@@ -173,11 +190,11 @@ final class AmbientPlayer {
 
     private func restartAfterDeviceChange() {
         guard playing, let url = currentURL, let cached = cached, cached.url == url else { return }
-        engine.connect(player, to: engine.mainMixerNode, format: cached.buffer.format)
+        guard connectPlayer(format: cached.buffer.format) else { return }
         connectedFormat = cached.buffer.format
         guard (try? engine.start()) != nil else { return }
         player.scheduleBuffer(cached.buffer, at: nil, options: .loops, completionHandler: nil)
-        player.play()
+        _ = startPlayer()
     }
 
     // MARK: - Preparazione del loop

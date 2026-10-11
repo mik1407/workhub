@@ -12,10 +12,13 @@ Dalla cartella del progetto:
 ./setup-signing.sh      # una volta sola: crea il certificato "WorkHub Dev"
 ./build.sh install      # compila, installa in /Applications e avvia
 ./build.sh dmg          # oppure: crea WorkHub-<versione>.dmg da aprire e trascinare in Applicazioni
+./build.sh test         # esegue i test della logica (cartella Tests/), senza creare l'app
 ```
 
+La build è sempre per macOS 12 o successivo, la stessa versione minima dichiarata in `Info.plist`.
+
 Se apri WorkHub da fuori Applicazioni (DMG, Download, cartella di build), propone di spostarsi lì da sola.
-Dal menu WorkHub puoi attivare "Apri all'avvio del Mac" (macOS 13 o successivo).
+Dal menu WorkHub puoi attivare "Open at Login" (macOS 13 o successivo).
 Per tenerla nel Dock: click destro sull'icona > Opzioni > Mantieni nel Dock.
 
 Con il certificato la firma resta uguale tra una build e l'altra, quindi macOS non richiede di nuovo
@@ -101,7 +104,7 @@ Se lo modifichi a mano, un servizio scritto male viene ignorato (gli altri resta
 l'app riparte dalle impostazioni iniziali e conserva l'originale come `settings-broken-<data>.json`.
 Altre cartelle utili: `icons/` (icone personalizzate), `Sounds/` (suoni del Focus), `todos.json`.
 
-Avvio automatico: menu WorkHub > "Apri all'avvio del Mac". Per tenerla nel Dock: click destro sull'icona >
+Avvio automatico: menu WorkHub > "Open at Login". Per tenerla nel Dock: click destro sull'icona >
 Opzioni > Mantieni nel Dock.
 
 ## Limiti noti

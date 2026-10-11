@@ -4,6 +4,7 @@
 #   ./build.sh install    compila, sostituisce /Applications/WorkHub.app e la avvia
 #   ./build.sh dmg        crea WorkHub-<versione>.dmg da dare ad altri: app universale (Apple Silicon + Intel)
 #                         compatibile da macOS 12, con le istruzioni per aprirla
+#   ./build.sh test       esegue i test della logica (cartella Tests/), senza creare l'app
 # Requisito: Xcode Command Line Tools (xcode-select --install).
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -13,6 +14,8 @@ IDENTITY="WorkHub Dev"
 MODE="${1:-}"
 MIN_MACOS="12.0"
 FRAMEWORKS=(-framework Cocoa -framework WebKit -framework UserNotifications -framework ServiceManagement -framework AVFoundation)
+# Questo Mac, con la versione minima di Info.plist: la build locale si comporta come quella distribuita
+HOST_TARGET="$(uname -m)-apple-macos$MIN_MACOS"
 
 # $1 = target (es. arm64-apple-macos12.0) oppure vuoto per questo Mac; $2 = file di uscita
 compile() {
@@ -22,6 +25,17 @@ compile() {
     swiftc -O -swift-version 5 Sources/*.swift -o "$2" "${FRAMEWORKS[@]}"
   fi
 }
+
+if [[ "$MODE" == "test" ]]; then
+  # Tutti i sorgenti tranne main.swift (che avvia l'app) più i test, in una cartella temporanea.
+  TMP="$(mktemp -d)"
+  trap 'rm -rf "$TMP"' EXIT
+  SOURCES=()
+  for f in Sources/*.swift; do [[ "$(basename "$f")" == "main.swift" ]] || SOURCES+=("$f"); done
+  swiftc -swift-version 5 -target "$HOST_TARGET" "${SOURCES[@]}" Tests/*.swift -o "$TMP/tests" "${FRAMEWORKS[@]}"
+  "$TMP/tests" "$TMP"
+  exit 0
+fi
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -39,7 +53,7 @@ if [[ "$MODE" == "dmg" ]]; then
   fi
   rm -rf "$PARTS"
 else
-  compile "" "$APP/Contents/MacOS/WorkHub"
+  compile "$HOST_TARGET" "$APP/Contents/MacOS/WorkHub"
 fi
 
 cp Info.plist "$APP/Contents/Info.plist"

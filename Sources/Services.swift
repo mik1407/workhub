@@ -89,10 +89,27 @@ func isAuthHost(_ host: String?) -> Bool {
     return authHosts.contains { host == $0 || host.hasSuffix("." + $0) }
 }
 
-/// Dominio "base" approssimato (ultime due parti): mail.google.com -> google.com.
+/// Suffissi pubblici di più parti: lì il sito ha una parte in più (bbc.co.uk, non co.uk).
+/// Non è l'elenco completo (Public Suffix List), ma copre i paesi e gli hosting più comuni.
+let multiPartSuffixes: Set<String> = [
+    "co.uk", "org.uk", "ac.uk", "gov.uk", "me.uk", "ltd.uk", "plc.uk",
+    "com.au", "net.au", "org.au", "edu.au", "gov.au", "co.nz", "org.nz",
+    "co.jp", "ne.jp", "or.jp", "co.kr", "co.in", "co.za", "co.il", "co.id", "co.th",
+    "com.br", "com.mx", "com.ar", "com.co", "com.tr", "com.cn", "com.hk", "com.tw", "com.sg", "com.my",
+    "com.ph", "com.pe", "com.uy", "com.ec", "com.pl", "com.es",
+    "github.io", "gitlab.io", "pages.dev", "vercel.app", "netlify.app", "herokuapp.com", "web.app",
+    "firebaseapp.com", "appspot.com", "azurewebsites.net", "cloudfront.net", "blogspot.com",
+]
+
+/// Dominio del sito: mail.google.com -> google.com, news.bbc.co.uk -> bbc.co.uk.
+/// Gli indirizzi IP restano interi. La pagina Impostazioni applica la stessa regola.
 func baseDomain(_ host: String?) -> String {
-    guard let host = host?.lowercased() else { return "" }
-    return host.split(separator: ".").suffix(2).joined(separator: ".")
+    guard let host = host?.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ".")),
+          !host.isEmpty else { return "" }
+    let parts = host.split(separator: ".")
+    if host.contains(":") || parts.allSatisfy({ $0.allSatisfy(\.isNumber) }) { return host }
+    let keep = multiPartSuffixes.contains(parts.suffix(2).joined(separator: ".")) ? 3 : 2
+    return parts.suffix(keep).joined(separator: ".")
 }
 
 /// Suffisso user agent identico a Safari, letto dalla versione di Safari installata.

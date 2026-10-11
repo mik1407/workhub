@@ -15,12 +15,12 @@ enum AppMover {
 
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "Spostare WorkHub nella cartella Applicazioni?"
-        alert.informativeText = "Così la trovi in Launchpad e Spotlight, puoi tenerla nel Dock e aprirla all'avvio del Mac."
-        alert.addButton(withTitle: "Sposta in Applicazioni")
-        alert.addButton(withTitle: "Non ora")
+        alert.messageText = "Move WorkHub to the Applications folder?"
+        alert.informativeText = "You'll find it in Launchpad and Spotlight, and you can keep it in the Dock and open it at login."
+        alert.addButton(withTitle: "Move to Applications")
+        alert.addButton(withTitle: "Not Now")
         alert.showsSuppressionButton = true
-        alert.suppressionButton?.title = "Non chiedere più"
+        alert.suppressionButton?.title = "Don't ask again"
         let response = alert.runModal()
         if alert.suppressionButton?.state == .on { UserDefaults.standard.set(true, forKey: skipKey) }
         guard response == .alertFirstButtonReturn else { return false }
@@ -34,8 +34,8 @@ enum AppMover {
             try fileManager.copyItem(at: current, to: destination)
         } catch {
             let failure = NSAlert()
-            failure.messageText = "Non riesco a spostare WorkHub"
-            failure.informativeText = "\(error.localizedDescription)\n\nTrascinala a mano nella cartella Applicazioni dal Finder."
+            failure.messageText = "Couldn't move WorkHub"
+            failure.informativeText = "\(error.localizedDescription)\n\nDrag it to the Applications folder in the Finder."
             _ = failure.runModal()
             return false
         }

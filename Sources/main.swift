@@ -8,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if AppMover.offerIfNeeded() { return }   // si sta riaprendo da /Applications
         // Evita che App Nap rallenti l'app quando è in background (notifiche in ritardo).
         activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep,
-                                                         reason: "Servizi di messaggistica attivi")
+                                                         reason: "Messaging services running")
         Notifier.shared.setup()
         Theme.apply(SettingsStore.shared.settings.appearance)   // prima di creare finestra e pannelli
         let controller = AppController()

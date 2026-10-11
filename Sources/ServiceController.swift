@@ -274,24 +274,47 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
     }
 
+    // Avvisi delle pagine (alert, confirm, prompt): pannello agganciato alla finestra principale,
+    // sopra il servizio che lo chiede, così le altre finestre restano utilizzabili.
+    private func present(_ alert: NSAlert, completion: @escaping (NSApplication.ModalResponse) -> Void) {
+        alert.messageText = config.name
+        guard let app = app, webView.window != nil else {
+            completion(alert.runModal())
+            return
+        }
+        app.show(service: self)
+        alert.beginSheetModal(for: app.window, completionHandler: completion)
+    }
+
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         let alert = NSAlert()
-        alert.messageText = config.name
         alert.informativeText = message
         alert.addButton(withTitle: "OK")
-        _ = alert.runModal()
-        completionHandler()
+        present(alert) { _ in completionHandler() }
     }
 
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         let alert = NSAlert()
-        alert.messageText = config.name
         alert.informativeText = message
         alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Annulla")
-        completionHandler(alert.runModal() == .alertFirstButtonReturn)
+        alert.addButton(withTitle: "Cancel")
+        present(alert) { completionHandler($0 == .alertFirstButtonReturn) }
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String,
+                 defaultText: String?, initiatedByFrame frame: WKFrameInfo,
+                 completionHandler: @escaping (String?) -> Void) {
+        let alert = NSAlert()
+        alert.informativeText = prompt
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 280, height: 24))
+        field.stringValue = defaultText ?? ""
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        present(alert) { completionHandler($0 == .alertFirstButtonReturn ? field.stringValue : nil) }
     }
 
     // Microfono/fotocamera (huddle Slack, note vocali WhatsApp). macOS chiede comunque il permesso la prima volta.
@@ -328,7 +351,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         DistributedNotificationCenter.default().post(name: Notification.Name("com.apple.DownloadFileFinished"),
                                                      object: url.path)
         Notifier.shared.show(identifier: "download|\(url.path)", serviceId: config.id, serviceName: config.name,
-                             jsId: nil, title: "Download completato", body: url.lastPathComponent, silent: true)
+                             jsId: nil, title: "Download complete", body: url.lastPathComponent, silent: true)
     }
 
     func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {

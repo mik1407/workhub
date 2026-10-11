@@ -352,7 +352,15 @@
   const send = (message) => { try { window.webkit.messageHandlers.settings.postMessage(message); } catch (_) {} };
   const save = () => send({ action: 'save', settings: JSON.stringify(S) });
   const host = (url) => { try { return new URL(url).host; } catch (_) { return url; } };
-  const baseDomain = (url) => host(url).toLowerCase().split('.').slice(-2).join('.');
+  // Stessa regola di baseDomain in Services.swift; l'elenco dei suffissi arriva dall'app.
+  const baseDomain = (url) => {
+    let h = '';
+    try { h = new URL(url).hostname.toLowerCase(); } catch (_) { return ''; }
+    const parts = h.split('.');
+    if (h.includes(':') || parts.every((p) => /^\d+$/.test(p))) return h;
+    const keep = (X.multiPartSuffixes || []).includes(parts.slice(-2).join('.')) ? 3 : 2;
+    return parts.slice(-keep).join('.');
+  };
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (tag === 'button') e.type = 'button'; return e; };
 
   function normalizeURL(value) {

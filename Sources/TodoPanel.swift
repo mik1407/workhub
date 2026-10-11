@@ -69,7 +69,7 @@ final class TodoPanel {
     }
 
     /// Lo stesso controllo della pagina: un oggetto JSON con l'elenco "todos".
-    private static func isReadable(_ json: String) -> Bool {
+    static func isReadable(_ json: String) -> Bool {
         guard let data = json.data(using: .utf8),
               let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return false }
         return object["todos"] is [Any]

@@ -10,13 +10,13 @@
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>1.1</string>
     <key>CFBundleVersion</key><string>1</string>
-    <key>NSHumanReadableCopyright</key><string>WorkHub — uso personale</string>
+    <key>NSHumanReadableCopyright</key><string>WorkHub — personal use</string>
     <key>LSMinimumSystemVersion</key><string>12.0</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
     <key>NSPrincipalClass</key><string>NSApplication</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSAppSleepDisabled</key><true/>
-    <key>NSMicrophoneUsageDescription</key><string>Serve per huddle Slack e note vocali WhatsApp.</string>
-    <key>NSCameraUsageDescription</key><string>Serve per le videochiamate dentro i servizi.</string>
+    <key>NSMicrophoneUsageDescription</key><string>Used for Slack huddles and WhatsApp voice notes.</string>
+    <key>NSCameraUsageDescription</key><string>Used for video calls inside services.</string>
 </dict>
 </plist>

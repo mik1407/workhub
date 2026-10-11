@@ -30,7 +30,7 @@ final class RailButton: NSView {
         updateTint()
     }
 
-    required init?(coder: NSCoder) { fatalError("init(coder:) non usato") }
+    required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
 
     override var isFlipped: Bool { true }
 
