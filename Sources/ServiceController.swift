@@ -12,6 +12,9 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     private(set) var badgeCount = 0
     private var iconFetched = false
     private var wasOffHome = false
+    private var hasLoaded = false          // the page finished loading at least once in this session
+    private var retryWork: DispatchWorkItem?
+    private var retryCount = 0
     private var popups: [PopupWindow] = []
     private var downloads: [ObjectIdentifier: URL] = [:]
 
@@ -169,7 +172,46 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
             wasOffHome = false
             app?.refreshSiblings(of: self)
         }
+        hasLoaded = true
+        retryWork?.cancel()
+        retryCount = 0
         fetchIconIfNeeded()
+    }
+
+    // MARK: - Load failures
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        loadFailed(error)
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        loadFailed(error)
+    }
+
+    /// A service that never loaded in this session (e.g. the network wasn't ready at login) would stay blank:
+    /// it retries on its own, waiting longer each time (2, 5, 10, 30 s, then every minute).
+    private func loadFailed(_ error: Error) {
+        let nsError = error as NSError
+        // Not failures: a newer navigation replaced this one, or the response became a download.
+        if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled { return }
+        if nsError.domain == "WebKitErrorDomain" && nsError.code == 102 { return }
+        NSLog("WorkHub: %@ failed to load: %@ (%@ %ld)", config.id, nsError.localizedDescription,
+              nsError.domain, nsError.code)
+        guard !hasLoaded else { return }
+        retryWork?.cancel()
+        let delays: [TimeInterval] = [2, 5, 10, 30]
+        let delay = retryCount < delays.count ? delays[retryCount] : 60
+        retryCount += 1
+        let work = DispatchWorkItem { [weak self] in self?.reloadHome() }
+        retryWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// Network back, or the service was selected: if it never loaded, it tries again right away.
+    func retryIfNeverLoaded() {
+        guard !hasLoaded, !webView.isLoading else { return }
+        retryWork?.cancel()
+        reloadHome()
     }
 
     func reloadHome() {
@@ -217,7 +259,8 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        _ = webView.reload()
+        // reload() does nothing if no page was ever committed: in that case load the service again.
+        if webView.url == nil { reloadHome() } else { _ = webView.reload() }
     }
 
     // MARK: - Service icon

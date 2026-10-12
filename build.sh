@@ -13,7 +13,7 @@ APP="WorkHub.app"
 IDENTITY="WorkHub Dev"
 MODE="${1:-}"
 MIN_MACOS="12.0"
-FRAMEWORKS=(-framework Cocoa -framework WebKit -framework UserNotifications -framework ServiceManagement -framework AVFoundation)
+FRAMEWORKS=(-framework Cocoa -framework WebKit -framework UserNotifications -framework ServiceManagement -framework AVFoundation -framework Network)
 # This Mac, with the minimum version from Info.plist: the local build behaves like the distributed one
 HOST_TARGET="$(uname -m)-apple-macos$MIN_MACOS"
 

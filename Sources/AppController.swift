@@ -1,4 +1,5 @@
 import Cocoa
+import Network
 import WebKit
 
 final class AppController: NSObject, NSWindowDelegate {
@@ -31,6 +32,7 @@ final class AppController: NSObject, NSWindowDelegate {
     var reminderWork: DispatchWorkItem?
     var overdueTimer: Timer?
     private var appearanceObserver: NSKeyValueObservation?
+    private let network = NWPathMonitor()
 
     var current: ServiceController? {
         services.indices.contains(selectedIndex) ? services[selectedIndex] : nil
@@ -203,6 +205,12 @@ final class AppController: NSObject, NSWindowDelegate {
             ?? (services.indices.contains(legacyIndex) ? legacyIndex : 0)
         select(index)
         window.makeKeyAndOrderFront(nil)
+        // Network back (e.g. Wi-Fi connecting after login): services that never loaded try again.
+        network.pathUpdateHandler = { [weak self] path in
+            guard path.status == .satisfied else { return }
+            DispatchQueue.main.async { self?.services.forEach { $0.retryIfNeverLoaded() } }
+        }
+        network.start(queue: .global(qos: .utility))
     }
 
     // MARK: - Services (from Settings)
@@ -297,6 +305,7 @@ final class AppController: NSObject, NSWindowDelegate {
         sidebar.selectedIndex = index
         _ = window.makeFirstResponder(services[index].webView)
         UserDefaults.standard.set(services[index].config.id, forKey: "selectedService")
+        services[index].retryIfNeverLoaded()
     }
 
     func showWindow() {
