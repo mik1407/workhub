@@ -81,6 +81,7 @@ extension AppController {
             "icons": icons,
             "customIcons": store.settings.services.filter { IconStore.override(id: $0.id) != nil }.map { $0.id },
             "multiPartSuffixes": multiPartSuffixes.sorted(),
+            "separateSessionsAvailable": separateSessionsAvailable,
             "now": Date().timeIntervalSince1970,
         ]
         guard let data = try? JSONSerialization.data(withJSONObject: extra),

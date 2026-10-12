@@ -10,6 +10,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     weak var app: AppController?
     var tile: ServiceTile?
     private(set) var badgeCount = 0
+    let ownSession: Bool                   // own cookies and sign-in, not shared with the other services
     private var iconFetched = false
     private var wasOffHome = false
     private var hasLoaded = false          // the page finished loading at least once in this session
@@ -23,9 +24,10 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     init(config: ServiceConfig, app: AppController) {
         self.config = config
         self.app = app
+        ownSession = config.separateSession && separateSessionsAvailable
 
         let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()   // login persists across launches
+        configuration.websiteDataStore = Self.dataStore(for: config)   // login persists across launches
         configuration.applicationNameForUserAgent = safariUserAgentSuffix()
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
 
@@ -51,6 +53,14 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         if #available(macOS 13.3, *) {
             webView.isInspectable = true   // Safari > Develop, useful for fixing badges
         }
+    }
+
+    /// The service's own storage when it has a separate sign-in, otherwise the one shared by all services.
+    private static func dataStore(for config: ServiceConfig) -> WKWebsiteDataStore {
+        if config.separateSession, #available(macOS 14.0, *) {
+            return WKWebsiteDataStore(forIdentifier: sessionIdentifier(for: config.id))
+        }
+        return .default()
     }
 
     func start() {
@@ -221,6 +231,14 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     /// Signs out of the service: clears cookies and data for its domains, then reloads.
     /// Services on the same domain (e.g. Gmail and Calendar) sign out together.
     func resetData() {
+        if ownSession {
+            // Separate sign-in: everything in its own storage belongs to this service only.
+            webView.configuration.websiteDataStore.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+                                                               modifiedSince: .distantPast) { [weak self] in
+                self?.reloadHome()
+            }
+            return
+        }
         let base = baseDomain(config.url.host)
         var domains: Set<String> = [base]
         if ["office.com", "microsoft.com", "live.com", "outlook.com", "office365.com"].contains(base) {
@@ -237,7 +255,9 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     }
 
     /// Shuts down the service when it is removed in Settings (frees the page and processes).
-    func teardown() {
+    /// With deleteData, a separate sign-in's own storage is erased too.
+    func teardown(deleteData: Bool = false) {
+        if deleteData && ownSession { eraseOwnSession() }
         webView.stopLoading()
         webView.configuration.userContentController.removeAllScriptMessageHandlers()
         webView.navigationDelegate = nil
@@ -247,6 +267,17 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         tile?.removeFromSuperview()
         popups.forEach { $0.window.close() }
         popups.removeAll()
+    }
+
+    private func eraseOwnSession() {
+        let store = webView.configuration.websiteDataStore
+        let id = sessionIdentifier(for: config.id)
+        store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
+            // Then the storage itself; if WebKit still holds it, it stays behind empty.
+            if #available(macOS 14.0, *) {
+                WKWebsiteDataStore.remove(forIdentifier: id) { _ in }
+            }
+        }
     }
 
     /// Login completed in a popup that landed on the service's page:

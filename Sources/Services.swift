@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 /// How to read a service's unread count.
@@ -18,6 +19,7 @@ struct ServiceConfig: Codable, Equatable {
     var notify = true               // macOS notifications
     var sound = true                // notification sound
     var allowDuringFocus = false    // notify even during focus (when silencing is on)
+    var separateSession = false     // own cookies and sign-in, e.g. for a second account (macOS 14+)
 
     init(id: String, name: String, url: URL, badge: BadgeMode) {
         self.id = id
@@ -37,7 +39,23 @@ struct ServiceConfig: Codable, Equatable {
         notify = (try? c.decode(Bool.self, forKey: .notify)) ?? true
         sound = (try? c.decode(Bool.self, forKey: .sound)) ?? true
         allowDuringFocus = (try? c.decode(Bool.self, forKey: .allowDuringFocus)) ?? false
+        separateSession = (try? c.decode(Bool.self, forKey: .separateSession)) ?? false
     }
+}
+
+/// Separate sign-in needs per-identifier website data stores, available from macOS 14.
+var separateSessionsAvailable: Bool {
+    if #available(macOS 14.0, *) { return true }
+    return false
+}
+
+/// Identifier of a service's own session storage: derived from the service id, so it stays the same
+/// across launches (the service finds its cookies and sign-in again) and differs between services.
+func sessionIdentifier(for serviceId: String) -> UUID {
+    var bytes = Array(SHA256.hash(data: Data("workhub.session.\(serviceId)".utf8)).prefix(16))
+    bytes[6] = (bytes[6] & 0x0f) | 0x50   // name-based UUID (version 5 layout)
+    bytes[8] = (bytes[8] & 0x3f) | 0x80   // RFC 4122 variant
+    return NSUUID(uuidBytes: bytes) as UUID
 }
 
 /// Services on first launch (sidebar order = shortcuts ⌘1…⌘9).

@@ -222,18 +222,20 @@ final class AppController: NSObject, NSWindowDelegate {
         var next: [ServiceController] = []
         for config in configs {
             if let existing = services.first(where: { $0.config.id == config.id }) {
-                if existing.config.url == config.url && existing.config.badge == config.badge {
+                if existing.config.url == config.url && existing.config.badge == config.badge
+                    && existing.config.separateSession == config.separateSession {
                     existing.config = config
                     next.append(existing)
                     continue
                 }
-                existing.teardown()
+                // Separate sign-in turned off: its own storage is no longer needed.
+                existing.teardown(deleteData: existing.config.separateSession && !config.separateSession)
             }
             let service = makeService(config)
             if !isLaunch { service.start() }
             next.append(service)
         }
-        for old in services where !next.contains(where: { $0 === old }) { old.teardown() }
+        for old in services where !next.contains(where: { $0 === old }) { old.teardown(deleteData: true) }
         services = next
         for (index, service) in services.enumerated() {
             service.tile?.letter = String(service.config.name.prefix(1))
@@ -275,7 +277,9 @@ final class AppController: NSObject, NSWindowDelegate {
 
     /// After "Sign out and reset data": reloads all services on the same domain.
     func reloadServices(withBaseDomain domain: String) {
-        for service in services where baseDomain(service.config.url.host) == domain { service.reloadHome() }
+        for service in services where !service.ownSession && baseDomain(service.config.url.host) == domain {
+            service.reloadHome()
+        }
     }
 
     func iconsChanged() {
@@ -323,8 +327,9 @@ final class AppController: NSObject, NSWindowDelegate {
     /// After a sign-in, reloads the services of the same account left signed out
     /// (e.g. signing in to Gmail → Calendar signs in too, without logging in again).
     func refreshSiblings(of service: ServiceController) {
+        guard !service.ownSession else { return }   // a separate sign-in is its own account
         let domain = baseDomain(service.config.url.host)
-        for other in services where other !== service
+        for other in services where other !== service && !other.ownSession
             && baseDomain(other.config.url.host) == domain
             && other.webView.url?.host != other.config.url.host {
             other.reloadHome()

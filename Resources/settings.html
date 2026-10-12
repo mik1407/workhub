@@ -491,7 +491,21 @@
     dock.addEventListener('click', () => { service.countInDock = !service.countInDock; save(); renderDetail(); });
     dockRow.append(dock);
 
-    form.append(nameLabel, urlLabel, badgeLabel, dockRow);
+    // Own cookies and sign-in: a second account of the same service (macOS 14 or later).
+    const sessionRow = el('div', 'inline');
+    sessionRow.append(el('span', null, 'Separate sign-in'));
+    const session = el('button', 'switch');
+    session.setAttribute('role', 'switch');
+    session.setAttribute('aria-label', 'Separate sign-in');
+    switchEl(session, service.separateSession, !X.separateSessionsAvailable);
+    session.addEventListener('click', () => { service.separateSession = !service.separateSession; save(); renderDetail(); });
+    sessionRow.append(session);
+    const sessionNote = el('div', 'note', X.separateSessionsAvailable
+      ? 'Own cookies and sign-in, for a second account. Changing it reloads the service and signs it out.'
+      : 'Requires macOS 14 or later.');
+    sessionNote.style.marginTop = '0';
+
+    form.append(nameLabel, urlLabel, badgeLabel, dockRow, sessionRow, sessionNote);
 
     const zone = el('div', 'danger-zone');
     const signOut = armedButton('Sign out and reset data', 'Click again to sign out', () => send({ action: 'resetData', id: service.id }));
@@ -504,7 +518,9 @@
     remove.disabled = S.services.length < 2;
     zone.append(signOut, remove);
 
-    const shared = S.services.filter((s) => s.id !== service.id && baseDomain(s.url) === baseDomain(service.url));
+    const ownSession = (s) => s.separateSession && X.separateSessionsAvailable;
+    const shared = ownSession(service) ? [] : S.services.filter((s) => s.id !== service.id && !ownSession(s)
+      && baseDomain(s.url) === baseDomain(service.url));
     box.append(head, form, zone);
     if (shared.length) {
       box.append(el('div', 'note', `Signing out also signs you out of ${shared.map((s) => s.name).join(', ')}: they share the same account.`));
@@ -602,10 +618,16 @@
     for (const item of items) {
       const b = el('button', 'item');
       const meta = el('div', 'meta');
-      meta.append(el('div', 'name', item.name), el('div', 'host', added.has(item.id) ? 'Added' : host(item.url)));
+      meta.append(el('div', 'name', item.name), el('div', 'host', added.has(item.id) ? 'Add another' : host(item.url)));
       b.append(avatar({ id: '__catalog_' + item.id, name: item.name }), meta);
-      b.disabled = added.has(item.id);
-      b.addEventListener('click', () => addService({ id: item.id, name: item.name, url: item.url, badge: item.badge }));
+      b.addEventListener('click', () => {
+        if (!added.has(item.id)) { addService({ id: item.id, name: item.name, url: item.url, badge: item.badge }); return; }
+        // Another instance: its own id and name, and its own sign-in where available.
+        let n = 2;
+        while (added.has(`${item.id}-${n}`)) n++;
+        addService({ id: `${item.id}-${n}`, name: `${item.name} ${n}`, url: item.url, badge: item.badge,
+                     separateSession: !!X.separateSessionsAvailable });
+      });
       box.append(b);
     }
   }
@@ -618,7 +640,7 @@
   });
 
   function addService(base) {
-    S.services.push({ countInDock: true, notify: true, sound: true, allowDuringFocus: false, ...base });
+    S.services.push({ countInDock: true, notify: true, sound: true, allowDuringFocus: false, separateSession: false, ...base });
     selectedId = base.id;
     $('sheet').hidden = true;
     tab = 'services';

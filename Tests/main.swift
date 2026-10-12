@@ -153,5 +153,15 @@ check(!Theme.apply(.light), "same theme: no change")
 equal(Theme.content, NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), "white cards in light mode")
 check(Theme.apply(.dark) && !Theme.isLight, "back to dark")
 
+section("Separate sign-in")
+equal(sessionIdentifier(for: "gmail-2"), sessionIdentifier(for: "gmail-2"), "same service -> same storage on every launch")
+check(sessionIdentifier(for: "gmail-2") != sessionIdentifier(for: "gmail-3"), "different services -> different storage")
+check(sessionIdentifier(for: "gmail").uuidString.dropFirst(14).hasPrefix("5"), "valid name-based UUID")
+let sessions = settings("""
+{"services":[{"id":"wa","name":"WhatsApp","url":"https://web.whatsapp.com/"},
+             {"id":"wa-2","name":"WhatsApp 2","url":"https://web.whatsapp.com/","separateSession":true}]}
+""")
+equal(sessions.services.map(\.separateSession), [false, true], "missing field -> shared sign-in")
+
 print(failures == 0 ? "\nAll tests passed." : "\n\(failures) tests failed.")
 exit(failures == 0 ? 0 : 1)
