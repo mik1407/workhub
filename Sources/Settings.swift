@@ -1,9 +1,9 @@
 import Foundation
 
 struct NotificationSettings: Codable, Equatable {
-    var pausedUntil: Double?          // secondi dal 1970; nil = notifiche attive
-    var hideContent = false           // mostra solo "Nuova notifica" (utile in condivisione schermo)
-    var silenceDuringFocus = false    // durante il focus solo i servizi con allowDuringFocus
+    var pausedUntil: Double?          // seconds since 1970; nil = notifications on
+    var hideContent = false           // show only "New notification" (useful when screen sharing)
+    var silenceDuringFocus = false    // during focus, only services with allowDuringFocus
 
     init() {}
 
@@ -24,9 +24,9 @@ struct FocusSettings: Codable, Equatable {
     var focusMinutes = 25
     var breakMinutes = 5
     var longBreakMinutes = 15
-    var longBreakEvery = 0       // 0 = nessuna pausa lunga; altrimenti ogni N sessioni
-    var autoStart = true         // la fase successiva parte da sola
-    var chime = false            // suono breve a fine fase
+    var longBreakEvery = 0       // 0 = no long break; otherwise every N sessions
+    var autoStart = true         // the next phase starts on its own
+    var chime = false            // short sound at the end of a phase
 
     init() {}
 
@@ -41,10 +41,10 @@ struct FocusSettings: Codable, Equatable {
     }
 }
 
-/// Tema dell'app: cornice, barre, pannelli e Impostazioni. I servizi seguono sempre il tema di macOS.
+/// App theme: frame, bars, panels and Settings. Services always follow the macOS theme.
 enum AppearanceMode: String, Codable {
     case dark, light
-    case system   // segue macOS (chiaro o scuro)
+    case system   // follows macOS (light or dark)
 }
 
 struct AppSettings: Codable, Equatable {
@@ -59,7 +59,7 @@ struct AppSettings: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         version = (try? c.decode(Int.self, forKey: .version)) ?? 1
-        // Un servizio alla volta: uno malformato viene scartato, gli altri restano.
+        // One service at a time: a malformed one is dropped, the others are kept.
         services = (try? c.decode([Lenient<ServiceConfig>].self, forKey: .services))?.compactMap { $0.value }
             ?? defaultServices
         notifications = (try? c.decode(NotificationSettings.self, forKey: .notifications)) ?? NotificationSettings()
@@ -67,7 +67,7 @@ struct AppSettings: Codable, Equatable {
         appearance = (try? c.decode(AppearanceMode.self, forKey: .appearance)) ?? .dark
     }
 
-    /// Corregge valori non validi (URL non web, id doppi, durate fuori scala).
+    /// Fixes invalid values (non-web URLs, duplicate ids, out-of-range durations).
     func sanitized() -> AppSettings {
         var copy = self
         var seen = Set<String>()
@@ -80,7 +80,7 @@ struct AppSettings: Codable, Equatable {
             fixed.name = name.isEmpty ? (service.url.host ?? service.id) : String(name.prefix(40))
             return fixed
         }
-        if copy.services.isEmpty { copy.services = defaultServices }   // la sidebar non resta mai vuota
+        if copy.services.isEmpty { copy.services = defaultServices }   // the sidebar is never left empty
         copy.focus.focusMinutes = min(max(focus.focusMinutes, 1), 180)
         copy.focus.breakMinutes = min(max(focus.breakMinutes, 1), 60)
         copy.focus.longBreakMinutes = min(max(focus.longBreakMinutes, 1), 90)
@@ -89,14 +89,14 @@ struct AppSettings: Codable, Equatable {
     }
 }
 
-/// Legge un elemento di una lista senza far fallire tutta la lista: se è malformato, value è nil.
+/// Decodes one list element without failing the whole list: if it is malformed, value is nil.
 private struct Lenient<T: Decodable>: Decodable {
     let value: T?
     init(from decoder: Decoder) throws { value = try? T(from: decoder) }
 }
 
-/// Copia un file di dati che non si riesce a leggere accanto all'originale
-/// (es. settings-broken-2026-10-11-093012.json), così non va perso quando l'app lo riscrive.
+/// Copies an unreadable data file next to the original
+/// (e.g. settings-broken-2026-10-11-093012.json), so it is not lost when the app rewrites it.
 func keepBrokenCopy(of url: URL) {
     let formatter = DateFormatter()
     formatter.dateFormat = "yyyy-MM-dd-HHmmss"
@@ -104,9 +104,9 @@ func keepBrokenCopy(of url: URL) {
     try? FileManager.default.copyItem(at: url, to: url.deletingLastPathComponent().appendingPathComponent(name))
 }
 
-/// Impostazioni in ~/Library/Application Support/WorkHub/settings.json.
+/// Settings in ~/Library/Application Support/WorkHub/settings.json.
 final class SettingsStore {
-    /// Unica istanza: il tema va letto all'avvio, prima che barre e pannelli vengano creati.
+    /// Single instance: the theme must be read at launch, before bars and panels are created.
     static let shared = SettingsStore()
 
     private(set) var settings: AppSettings
@@ -121,8 +121,8 @@ final class SettingsStore {
             if let saved = try? JSONDecoder().decode(AppSettings.self, from: data) {
                 settings = saved.sanitized()
             } else {
-                // File illeggibile (es. modificato a mano): si riparte dai valori iniziali,
-                // ma l'originale resta da parte invece di essere sovrascritto al primo salvataggio.
+                // Unreadable file (e.g. edited by hand): start over from the defaults,
+                // but the original is kept aside instead of being overwritten on the first save.
                 keepBrokenCopy(of: fileURL)
                 settings = AppSettings()
             }
@@ -136,7 +136,7 @@ final class SettingsStore {
         save()
     }
 
-    /// Le impostazioni in JSON (per la pagina Impostazioni).
+    /// The settings as JSON (for the Settings page).
     var json: String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]

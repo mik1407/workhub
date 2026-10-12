@@ -1,23 +1,23 @@
 import Foundation
 
-/// Come leggere il numero di non letti di un servizio.
+/// How to read a service's unread count.
 enum BadgeMode: String, Codable {
     case none
-    case title   // "(3)" nel titolo della pagina (WhatsApp, Teams, Telegram…)
-    case gmail   // "(3)" nel titolo, mantenuto quando apri una mail
-    case slack   // selettori DOM di Slack, con fallback sul titolo
+    case title   // "(3)" in the page title (WhatsApp, Teams, Telegram…)
+    case gmail   // "(3)" in the title, kept when you open an email
+    case slack   // Slack DOM selectors, falling back to the title
 }
 
-/// Un servizio della sidebar. Salvato in settings.json, modificabile da Impostazioni > Services.
+/// A sidebar service. Saved in settings.json, editable from Settings > Services.
 struct ServiceConfig: Codable, Equatable {
     var id: String
     var name: String
     var url: URL
     var badge: BadgeMode
-    var countInDock = true          // il suo numero entra nel badge del Dock
-    var notify = true               // notifiche macOS
-    var sound = true                // suono delle notifiche
-    var allowDuringFocus = false    // notifiche anche durante il focus (se il silenzio è attivo)
+    var countInDock = true          // its count is included in the Dock badge
+    var notify = true               // macOS notifications
+    var sound = true                // notification sound
+    var allowDuringFocus = false    // notify even during focus (when silencing is on)
 
     init(id: String, name: String, url: URL, badge: BadgeMode) {
         self.id = id
@@ -26,7 +26,7 @@ struct ServiceConfig: Codable, Equatable {
         self.badge = badge
     }
 
-    // Lettura tollerante: i campi mancanti prendono il valore predefinito.
+    // Lenient decoding: missing fields take their default value.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(String.self, forKey: .id)
@@ -40,7 +40,7 @@ struct ServiceConfig: Codable, Equatable {
     }
 }
 
-/// Servizi al primo avvio (ordine della sidebar = scorciatoie ⌘1…⌘9).
+/// Services on first launch (sidebar order = shortcuts ⌘1…⌘9).
 let defaultServices: [ServiceConfig] = [
     ServiceConfig(id: "gmail", name: "Gmail", url: URL(string: "https://mail.google.com/mail/u/0/")!, badge: .gmail),
     ServiceConfig(id: "slack", name: "Slack", url: URL(string: "https://app.slack.com/client")!, badge: .slack),
@@ -50,7 +50,7 @@ let defaultServices: [ServiceConfig] = [
     ServiceConfig(id: "whatsapp", name: "WhatsApp", url: URL(string: "https://web.whatsapp.com/")!, badge: .title),
 ]
 
-/// Catalogo di Impostazioni > Services > Add service.
+/// Catalog for Settings > Services > Add service.
 let serviceCatalog: [ServiceConfig] = [
     ServiceConfig(id: "gmail", name: "Gmail", url: URL(string: "https://mail.google.com/mail/u/0/")!, badge: .gmail),
     ServiceConfig(id: "calendar", name: "Google Calendar", url: URL(string: "https://calendar.google.com/calendar/u/0/r")!, badge: .none),
@@ -73,8 +73,8 @@ let serviceCatalog: [ServiceConfig] = [
     ServiceConfig(id: "gemini", name: "Gemini", url: URL(string: "https://gemini.google.com/app")!, badge: .none),
 ]
 
-/// Host di login usati nei popup OAuth ("Accedi con Google/Apple/Microsoft").
-/// Questi popup restano dentro l'app; tutti gli altri link esterni si aprono nel browser.
+/// Login hosts used in OAuth popups ("Sign in with Google/Apple/Microsoft").
+/// These popups stay inside the app; all other external links open in the browser.
 private let authHosts: [String] = [
     "accounts.google.com",
     "appleid.apple.com",
@@ -89,8 +89,8 @@ func isAuthHost(_ host: String?) -> Bool {
     return authHosts.contains { host == $0 || host.hasSuffix("." + $0) }
 }
 
-/// Suffissi pubblici di più parti: lì il sito ha una parte in più (bbc.co.uk, non co.uk).
-/// Non è l'elenco completo (Public Suffix List), ma copre i paesi e gli hosting più comuni.
+/// Multi-part public suffixes: there the site has one extra part (bbc.co.uk, not co.uk).
+/// Not the full list (Public Suffix List), but it covers the most common countries and hosts.
 let multiPartSuffixes: Set<String> = [
     "co.uk", "org.uk", "ac.uk", "gov.uk", "me.uk", "ltd.uk", "plc.uk",
     "com.au", "net.au", "org.au", "edu.au", "gov.au", "co.nz", "org.nz",
@@ -101,8 +101,8 @@ let multiPartSuffixes: Set<String> = [
     "firebaseapp.com", "appspot.com", "azurewebsites.net", "cloudfront.net", "blogspot.com",
 ]
 
-/// Dominio del sito: mail.google.com -> google.com, news.bbc.co.uk -> bbc.co.uk.
-/// Gli indirizzi IP restano interi. La pagina Impostazioni applica la stessa regola.
+/// Site domain: mail.google.com -> google.com, news.bbc.co.uk -> bbc.co.uk.
+/// IP addresses are kept whole. The Settings page applies the same rule.
 func baseDomain(_ host: String?) -> String {
     guard let host = host?.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: ".")),
           !host.isEmpty else { return "" }
@@ -112,8 +112,8 @@ func baseDomain(_ host: String?) -> String {
     return parts.suffix(keep).joined(separator: ".")
 }
 
-/// Suffisso user agent identico a Safari, letto dalla versione di Safari installata.
-/// WebKit lo aggiunge al proprio UA di base, così i servizi vedono un Safari standard.
+/// User agent suffix identical to Safari's, read from the installed Safari version.
+/// WebKit appends it to its own base UA, so services see a standard Safari.
 func safariUserAgentSuffix() -> String {
     let version = Bundle(path: "/Applications/Safari.app")?
         .infoDictionary?["CFBundleShortVersionString"] as? String ?? "18.0"

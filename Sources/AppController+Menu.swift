@@ -2,7 +2,7 @@ import Cocoa
 import ServiceManagement
 import WebKit
 
-/// Barra dei menu.
+/// Menu bar.
 extension AppController {
     // MARK: - Menu
 
@@ -33,7 +33,7 @@ extension AppController {
         appMenu.addItem(withTitle: "Quit \(appName)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         addSubmenu(appMenu, to: main)
 
-        // Necessario per copia/incolla dentro le pagine web
+        // Needed for copy/paste inside web pages
         let edit = NSMenu(title: "Edit")
         edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
         let redo = edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
@@ -103,7 +103,7 @@ extension AppController {
         main.addItem(item)
     }
 
-    /// Elemento di login gestito da macOS (Impostazioni di Sistema > Generali > Elementi login).
+    /// Login item managed by macOS (System Settings > General > Login Items).
     @objc private func toggleLaunchAtLogin(_ sender: NSMenuItem) {
         guard #available(macOS 13.0, *) else { return }
         let service = SMAppService.mainApp

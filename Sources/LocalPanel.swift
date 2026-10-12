@@ -1,8 +1,8 @@
 import Cocoa
 import WebKit
 
-/// Pannello laterale con una pagina locale (Resources/<page>.html) che dialoga con l'app via messaggi.
-/// Usato da Todos e Focus.
+/// Side panel with a local page (Resources/<page>.html) that talks to the app via messages.
+/// Used by Todos and Focus.
 final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     static let width: CGFloat = 360
 
@@ -19,7 +19,7 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = content
         webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.alphaValue = 0   // invisibile finché la pagina non è pronta (niente lampo bianco)
+        webView.alphaValue = 0   // invisible until the page is ready (no white flash)
         super.init()
         installScripts()
         content.add(self, name: handler)
@@ -33,7 +33,7 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         webView.evaluateJavaScript(script, completionHandler: nil)
     }
 
-    /// Cambio di tema: la pagina aperta si aggiorna subito, e se viene ricaricata parte già col tema giusto.
+    /// Theme change: the open page updates right away, and if reloaded it starts with the right theme.
     func applyTheme() {
         installScripts()
         run(Self.themeScript)
@@ -43,8 +43,8 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         "document.documentElement.dataset.theme = '\(Theme.isLight ? "light" : "dark")';"
     }
 
-    /// Script eseguiti all'apertura della pagina: il tema (niente lampo dei colori dell'altro tema)
-    /// ed eventuali dati iniziali.
+    /// Scripts run when the page opens: the theme (no flash of the other theme's colors)
+    /// and any initial data.
     private func installScripts() {
         let content = webView.configuration.userContentController
         content.removeAllUserScripts()
@@ -63,7 +63,7 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         onLoad?()
     }
 
-    // Il pannello mostra solo la propria pagina: i link vanno al browser, i file trascinati vengono ignorati.
+    // The panel shows only its own page: links go to the browser, dropped files are ignored.
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = navigationAction.request.url else {
@@ -78,7 +78,7 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         decisionHandler(.cancel)
     }
 
-    /// Stringa Swift → letterale stringa JavaScript con escaping corretto.
+    /// Swift string → JavaScript string literal with correct escaping.
     static func jsString(_ value: String) -> String {
         guard let data = try? JSONSerialization.data(withJSONObject: [value]),
               let json = String(data: data, encoding: .utf8) else { return "null" }

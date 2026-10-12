@@ -1,7 +1,7 @@
 import Cocoa
 import UniformTypeIdentifiers
 
-/// Focus (Pomodoro): pannello, notifiche di fine fase, suoni.
+/// Focus (Pomodoro): panel, end-of-phase notifications, sounds.
 extension AppController {
     // MARK: - Focus (Pomodoro)
 
@@ -31,13 +31,13 @@ extension AppController {
             } else {
                 body = phase.isBreak ? "Step away from the screen." : "Pick one thing and work on it."
             }
-            if settings.chime { _ = NSSound(named: "Glass")?.play() }   // con il suono di fine fase la notifica resta muta
+            if settings.chime { _ = NSSound(named: "Glass")?.play() }   // with the end-of-phase sound the notification stays silent
             Notifier.shared.show(identifier: "focus-phase", serviceId: "focus", serviceName: "Focus", jsId: nil,
                                  title: title, body: body, silent: settings.chime)
         }
     }
 
-    /// Aggiunge suoni scelti dal Finder alla cartella dei suoni e seleziona il primo.
+    /// Adds sounds chosen in the Finder to the sounds folder and selects the first one.
     private func addSounds() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = true
@@ -52,7 +52,7 @@ extension AppController {
         }
     }
 
-    /// Aggiorna anello e tooltip del pulsante Focus e lo stato mostrato nel pannello.
+    /// Updates the Focus button's ring and tooltip and the state shown in the panel.
     func focusChanged() {
         let timer = focusTimer
         if timer.phase == .idle {

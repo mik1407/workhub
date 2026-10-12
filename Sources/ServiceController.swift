@@ -1,11 +1,11 @@
 import Cocoa
 import WebKit
 
-/// Gestisce la web view di un servizio: caricamento, link, popup di login, download,
-/// upload di file, badge, notifiche e icona.
+/// Manages a service's web view: loading, links, login popups, downloads,
+/// file uploads, badge, notifications and icon.
 final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
                                WKScriptMessageHandler, WKDownloadDelegate {
-    var config: ServiceConfig          // nome e opzioni aggiornabili al volo da Impostazioni
+    var config: ServiceConfig          // name and options, updatable on the fly from Settings
     let webView: WKWebView
     weak var app: AppController?
     var tile: ServiceTile?
@@ -22,7 +22,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         self.app = app
 
         let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()   // login persistente tra un avvio e l'altro
+        configuration.websiteDataStore = .default()   // login persists across launches
         configuration.applicationNameForUserAgent = safariUserAgentSuffix()
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
 
@@ -46,7 +46,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
         if #available(macOS 13.3, *) {
-            webView.isInspectable = true   // Safari > Sviluppo, utile per correggere i badge
+            webView.isInspectable = true   // Safari > Develop, useful for fixing badges
         }
     }
 
@@ -64,7 +64,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         popups.removeAll { $0 === popup }
     }
 
-    // MARK: - Messaggi dagli script
+    // MARK: - Messages from scripts
 
     func userContentController(_ userContentController: WKUserContentController,
                                didReceive message: WKScriptMessage) {
@@ -78,8 +78,8 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
             tile?.badgeDot = dot
             app?.badgesChanged()
         case "hubNotify":
-            // Solo dal servizio (anche dai suoi iframe, es. la chat dentro Gmail): un iframe di un altro sito
-            // (pubblicità, contenuti incorporati) non può mandare notifiche a nome del servizio.
+            // Only from the service (including its iframes, e.g. the chat inside Gmail): an iframe from another site
+            // (ads, embedded content) cannot send notifications on behalf of the service.
             guard baseDomain(message.frameInfo.securityOrigin.host) == baseDomain(config.url.host),
                   let json = message.body as? String,
                   let data = json.data(using: .utf8),
@@ -94,7 +94,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         let action = object["action"] as? String ?? ""
         let jsId = object["id"] as? String ?? UUID().uuidString
         let tag = object["tag"] as? String ?? ""
-        // Stesso tag = la nuova notifica sostituisce la precedente (come nel browser).
+        // Same tag = the new notification replaces the previous one (as in the browser).
         let identifier = tag.isEmpty ? "\(config.id)|\(jsId)" : "\(config.id)|tag:\(tag)"
 
         if action == "close" {
@@ -102,7 +102,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
             return
         }
         guard action == "show" else { return }
-        // Notifiche spente, in pausa, silenzio durante il focus, o lo stai già guardando
+        // Notifications off, paused, silenced during focus, or you're already looking at it
         guard app?.shouldNotify(from: self) ?? true else { return }
         let hide = app?.hideNotificationContent ?? false
         Notifier.shared.show(identifier: identifier, serviceId: config.id, serviceName: config.name,
@@ -112,7 +112,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
                              silent: !config.sound || (object["silent"] as? Bool ?? false))
     }
 
-    // MARK: - Navigazione
+    // MARK: - Navigation
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
@@ -126,8 +126,8 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
         let scheme = (url.scheme ?? "").lowercased()
 
-        // mailto:, zoommtg:, slack:// ecc. → app di sistema, ma solo se l'hai cliccato tu
-        // (evita che Slack apra da solo l'app desktop al login).
+        // mailto:, zoommtg:, slack:// etc. → system app, but only if you clicked it yourself
+        // (stops Slack from opening the desktop app on its own at login).
         if !Self.webSchemes.contains(scheme) {
             if navigationAction.navigationType == .linkActivated { NSWorkspace.shared.open(url) }
             decisionHandler(.cancel)
@@ -165,7 +165,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         if !onHome {
             wasOffHome = true
         } else if wasOffHome {
-            // Login appena riuscito in questa vista: fa entrare anche i servizi dello stesso account.
+            // Login just succeeded in this view: signs in the services on the same account too.
             wasOffHome = false
             app?.refreshSiblings(of: self)
         }
@@ -176,8 +176,8 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         _ = webView.load(URLRequest(url: config.url))
     }
 
-    /// Esce dal servizio: cancella cookie e dati dei suoi domini, poi ricarica.
-    /// I servizi sullo stesso dominio (es. Gmail e Calendar) escono insieme.
+    /// Signs out of the service: clears cookies and data for its domains, then reloads.
+    /// Services on the same domain (e.g. Gmail and Calendar) sign out together.
     func resetData() {
         let base = baseDomain(config.url.host)
         var domains: Set<String> = [base]
@@ -194,7 +194,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
     }
 
-    /// Chiude il servizio quando viene rimosso da Impostazioni (libera pagina e processi).
+    /// Shuts down the service when it is removed in Settings (frees the page and processes).
     func teardown() {
         webView.stopLoading()
         webView.configuration.userContentController.removeAllScriptMessageHandlers()
@@ -207,8 +207,8 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         popups.removeAll()
     }
 
-    /// Login completato in un popup e arrivato sulla pagina del servizio:
-    /// la pagina si apre nella vista principale (i cookie sono condivisi, quindi sei già dentro).
+    /// Login completed in a popup that landed on the service's page:
+    /// the page opens in the main view (cookies are shared, so you're already signed in).
     func finishLogin(at url: URL) {
         wasOffHome = false
         _ = webView.load(URLRequest(url: url))
@@ -220,10 +220,10 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         _ = webView.reload()
     }
 
-    // MARK: - Icona del servizio
+    // MARK: - Service icon
 
     private func fetchIconIfNeeded() {
-        // Solo una volta per avvio e solo sulla pagina del servizio (non sulla pagina di login di Google).
+        // Only once per launch and only on the service's page (not on Google's login page).
         guard !iconFetched, webView.url?.host == config.url.host else { return }
         iconFetched = true
         webView.evaluateJavaScript(Scripts.faviconCandidates) { [weak self] result, _ in
@@ -241,7 +241,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
     }
 
-    // MARK: - Finestre, file, permessi
+    // MARK: - Windows, files, permissions
 
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                  for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
@@ -249,12 +249,12 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         let address = url?.absoluteString ?? ""
         let blank = address.isEmpty || address == "about:blank"
         if blank || isAuthHost(url?.host) {
-            // Popup di login OAuth (o finestra vuota che verrà riempita via script)
+            // OAuth login popup (or a blank window that will be filled via script)
             let popup = PopupWindow(configuration: configuration, owner: self, showImmediately: !blank)
             popups.append(popup)
             return popup.webView
         }
-        if let url = url { NSWorkspace.shared.open(url) }   // tutti gli altri link: browser predefinito
+        if let url = url { NSWorkspace.shared.open(url) }   // all other links: default browser
         return nil
     }
 
@@ -274,8 +274,8 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
     }
 
-    // Avvisi delle pagine (alert, confirm, prompt): pannello agganciato alla finestra principale,
-    // sopra il servizio che lo chiede, così le altre finestre restano utilizzabili.
+    // Page dialogs (alert, confirm, prompt): a sheet attached to the main window,
+    // over the service that asks for it, so the other windows stay usable.
     private func present(_ alert: NSAlert, completion: @escaping (NSApplication.ModalResponse) -> Void) {
         alert.messageText = config.name
         guard let app = app, webView.window != nil else {
@@ -317,9 +317,9 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         present(alert) { completionHandler($0 == .alertFirstButtonReturn ? field.stringValue : nil) }
     }
 
-    // Microfono/fotocamera (huddle Slack, note vocali WhatsApp). macOS chiede comunque il permesso la prima volta.
-    // Senza domande solo al servizio stesso; per altri siti (script di terze parti, reindirizzamenti)
-    // WebKit chiede conferma.
+    // Microphone/camera (Slack huddles, WhatsApp voice notes). macOS still asks for permission the first time.
+    // Granted without asking only to the service itself; for other sites (third-party scripts, redirects)
+    // WebKit asks for confirmation.
     func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
                  initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
                  decisionHandler: @escaping (WKPermissionDecision) -> Void) {
@@ -347,7 +347,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
 
     func downloadDidFinish(_ download: WKDownload) {
         guard let url = downloads.removeValue(forKey: ObjectIdentifier(download)) else { return }
-        // Fa rimbalzare lo stack Download nel Dock, come Safari
+        // Bounces the Downloads stack in the Dock, like Safari
         DistributedNotificationCenter.default().post(name: Notification.Name("com.apple.DownloadFileFinished"),
                                                      object: url.path)
         Notifier.shared.show(identifier: "download|\(url.path)", serviceId: config.id, serviceName: config.name,
@@ -372,14 +372,14 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     }
 }
 
-/// Finestra secondaria per i popup di login (es. "Accedi con Google" su Claude o ChatGPT).
-/// Se un popup vuoto finisce su un sito esterno, il link va al browser e il popup si chiude.
+/// Secondary window for login popups (e.g. "Sign in with Google" on Claude or ChatGPT).
+/// If a blank popup ends up on an external site, the link goes to the browser and the popup closes.
 final class PopupWindow: NSObject, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate {
     let window: NSWindow
     let webView: WKWebView
     weak var owner: ServiceController?
     private var trusted: Bool
-    private var authSeen: Bool      // il popup è passato da una pagina di login
+    private var authSeen: Bool      // the popup has gone through a login page
     private var handingOff = false
     private var closing = false
 
@@ -435,7 +435,7 @@ final class PopupWindow: NSObject, NSWindowDelegate, WKNavigationDelegate, WKUID
         }
         let isMainFrame = navigationAction.targetFrame?.isMainFrame ?? true
         if isMainFrame && isAuthHost(url.host) { authSeen = true }
-        // Login finito: la pagina del servizio non va mostrata nel popup.
+        // Login finished: the service's page must not be shown in the popup.
         if isMainFrame && authSeen && url.host == owner?.config.url.host { window.orderOut(nil) }
         if isMainFrame && !trusted {
             if isAuthHost(url.host) || baseDomain(url.host) == baseDomain(owner?.config.url.host) {
@@ -470,14 +470,14 @@ final class PopupWindow: NSObject, NSWindowDelegate, WKNavigationDelegate, WKUID
         return nil
     }
 
-    // Il popup OAuth "classico" si chiude da solo con window.close() a login completato.
+    // The "classic" OAuth popup closes itself with window.close() once login completes.
     func webViewDidClose(_ webView: WKWebView) {
         close()
     }
 
-    // Login finito su una pagina del servizio (es. "Accedi" di Gmail → mail.google.com):
-    // la pagina passa nella vista principale e il popup si chiude.
-    // La breve attesa lascia chiudersi da soli i popup OAuth che rispondono alla pagina principale.
+    // Login finished on a service page (e.g. Gmail's "Sign in" → mail.google.com):
+    // the page moves to the main view and the popup closes.
+    // The short delay lets OAuth popups that reply to the main page close on their own.
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard authSeen, !handingOff, let url = webView.url, url.host == owner?.config.url.host else { return }
         handingOff = true

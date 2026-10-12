@@ -1,11 +1,11 @@
 #!/bin/bash
-# Compila WorkHub.app.
-#   ./build.sh            compila (WorkHub.app in questa cartella)
-#   ./build.sh install    compila, sostituisce /Applications/WorkHub.app e la avvia
-#   ./build.sh dmg        crea WorkHub-<versione>.dmg da dare ad altri: app universale (Apple Silicon + Intel)
-#                         compatibile da macOS 12, con le istruzioni per aprirla
-#   ./build.sh test       esegue i test della logica (cartella Tests/), senza creare l'app
-# Requisito: Xcode Command Line Tools (xcode-select --install).
+# Builds WorkHub.app.
+#   ./build.sh            builds (WorkHub.app in this folder)
+#   ./build.sh install    builds, replaces /Applications/WorkHub.app and launches it
+#   ./build.sh dmg        creates WorkHub-<version>.dmg to give to others: universal app (Apple Silicon + Intel)
+#                         compatible with macOS 12 and later, with instructions for opening it
+#   ./build.sh test       runs the logic tests (Tests/ folder) without building the app
+# Requirement: Xcode Command Line Tools (xcode-select --install).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -14,10 +14,10 @@ IDENTITY="WorkHub Dev"
 MODE="${1:-}"
 MIN_MACOS="12.0"
 FRAMEWORKS=(-framework Cocoa -framework WebKit -framework UserNotifications -framework ServiceManagement -framework AVFoundation)
-# Questo Mac, con la versione minima di Info.plist: la build locale si comporta come quella distribuita
+# This Mac, with the minimum version from Info.plist: the local build behaves like the distributed one
 HOST_TARGET="$(uname -m)-apple-macos$MIN_MACOS"
 
-# $1 = target (es. arm64-apple-macos12.0) oppure vuoto per questo Mac; $2 = file di uscita
+# $1 = target (e.g. arm64-apple-macos12.0) or empty for this Mac; $2 = output file
 compile() {
   if [[ -n "$1" ]]; then
     swiftc -O -swift-version 5 -target "$1" Sources/*.swift -o "$2" "${FRAMEWORKS[@]}"
@@ -27,7 +27,7 @@ compile() {
 }
 
 if [[ "$MODE" == "test" ]]; then
-  # Tutti i sorgenti tranne main.swift (che avvia l'app) più i test, in una cartella temporanea.
+  # All sources except main.swift (which launches the app) plus the tests, in a temporary folder.
   TMP="$(mktemp -d)"
   trap 'rm -rf "$TMP"' EXIT
   SOURCES=()
@@ -41,14 +41,14 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 if [[ "$MODE" == "dmg" ]]; then
-  # Per altri Mac: un binario per Apple Silicon e uno per Intel, uniti, compatibili da macOS 12.
+  # For other Macs: one binary for Apple Silicon and one for Intel, merged, compatible with macOS 12 and later.
   PARTS="$(mktemp -d)"
   if compile "arm64-apple-macos$MIN_MACOS" "$PARTS/arm64" && compile "x86_64-apple-macos$MIN_MACOS" "$PARTS/x86_64"; then
     lipo -create -output "$APP/Contents/MacOS/WorkHub" "$PARTS/arm64" "$PARTS/x86_64"
-    echo "App universale (Apple Silicon + Intel), macOS $MIN_MACOS o successivo."
+    echo "Universal app (Apple Silicon + Intel), macOS $MIN_MACOS or later."
   else
-    echo "ATTENZIONE: build universale non riuscita. Uso solo questo Mac: funzionerà su Mac"
-    echo "con lo stesso processore e la stessa versione di macOS (o più recente)."
+    echo "WARNING: universal build failed. Building for this Mac only: it will work on Macs"
+    echo "with the same processor and the same macOS version (or newer)."
     compile "" "$APP/Contents/MacOS/WorkHub"
   fi
   rm -rf "$PARTS"
@@ -59,29 +59,29 @@ fi
 cp Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns Resources/todos.html Resources/focus.html Resources/settings.html "$APP/Contents/Resources/"
 
-# Suoni del Focus: vanno nella tua Libreria, non dentro l'app (quindi non finiscono nel DMG).
-# Quelli già presenti non vengono sovrascritti.
+# Focus sounds: they go into your Library, not inside the app (so they don't end up in the DMG).
+# Sounds already there are not overwritten.
 SOUNDS_DIR="$HOME/Library/Application Support/WorkHub/Sounds"
 if compgen -G "Sounds/*" > /dev/null; then
   mkdir -p "$SOUNDS_DIR"
   cp -n Sounds/* "$SOUNDS_DIR/" 2>/dev/null || true
-  echo "Suoni disponibili in: $SOUNDS_DIR"
+  echo "Sounds available in: $SOUNDS_DIR"
 fi
 
-# Numero di build = data e ora (visibile in "Informazioni su WorkHub")
+# Build number = date and time (shown in "About WorkHub")
 BUILD="$(date +%Y%m%d.%H%M)"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" "$APP/Contents/Info.plist"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 
-# Firma stabile se esiste il certificato (vedi ./setup-signing.sh), altrimenti ad-hoc.
+# Stable signature if the certificate exists (see ./setup-signing.sh), otherwise ad-hoc.
 SIGNED_WITH_CERT=0
 if security find-identity -p codesigning | grep -q "\"$IDENTITY\""; then
   codesign --force --sign "$IDENTITY" "$APP"
   SIGNED_WITH_CERT=1
-  echo "Firmata con \"$IDENTITY\"."
+  echo "Signed with \"$IDENTITY\"."
 else
   codesign --force --sign - "$APP"
-  echo "Firma ad-hoc: macOS richiederà i permessi a ogni build (lancia ./setup-signing.sh per evitarlo)."
+  echo "Ad-hoc signature: macOS will ask for permissions on every build (run ./setup-signing.sh to avoid this)."
 fi
 echo "WorkHub $VERSION (build $BUILD)"
 
@@ -91,7 +91,7 @@ case "$MODE" in
     rm -rf "/Applications/$APP"
     mv "$APP" /Applications/
     open "/Applications/$APP"
-    echo "Installata in /Applications e avviata."
+    echo "Installed in /Applications and launched."
     ;;
   dmg)
     DMG="WorkHub-$VERSION.dmg"
@@ -99,14 +99,14 @@ case "$MODE" in
     trap 'rm -rf "$STAGE"' EXIT
     ditto "$APP" "$STAGE/$APP"
     ln -s /Applications "$STAGE/Applications"
-    cp "Distribuzione/Come aprire WorkHub.txt" "$STAGE/"
+    cp "Distribution/How to open WorkHub.txt" "$STAGE/"
     rm -f "$DMG"
     hdiutil create -volname "WorkHub $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null
     if [[ $SIGNED_WITH_CERT == 1 ]]; then codesign --force --sign "$IDENTITY" "$DMG"; fi
-    echo "Installer pronto: $DMG"
-    echo "I suoni del Focus non sono inclusi: chi la installa può aggiungere i propri da \"Add sounds…\"."
+    echo "Installer ready: $DMG"
+    echo "Focus sounds are not included: whoever installs it can add their own from \"Add sounds…\"."
     ;;
   *)
-    echo "Fatto: $APP  (./build.sh install per installarla, ./build.sh dmg per l'installer)"
+    echo "Done: $APP  (./build.sh install to install it, ./build.sh dmg for the installer)"
     ;;
 esac

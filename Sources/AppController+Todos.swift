@@ -1,17 +1,17 @@
 import Cocoa
 
-/// Pannello Todos: badge dei todo scaduti, promemoria e pulsanti delle notifiche di scadenza.
+/// Todos panel: overdue todo badge, reminders and due-date notification buttons.
 extension AppController {
-    // MARK: - Todo: scadenze e promemoria
+    // MARK: - Todo: due dates and reminders
 
     func setupTodos() {
         todoPanel.onSaved = { [weak self] json in self?.todosChanged(json) }
         todosChanged(todoPanel.lastState)
-        // Un todo diventa scaduto col passare del tempo: badge ricontrollato ogni 30 secondi
+        // A todo becomes overdue as time passes: badge rechecked every 30 seconds
         let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in self?.refreshOverdueBadge() }
         RunLoop.main.add(timer, forMode: .common)
         overdueTimer = timer
-        // Pulsanti della notifica di scadenza
+        // Due-date notification buttons
         Notifier.shared.onAction = { [weak self] action, service, id in
             guard service == "todos", let id = id, let self = self else { return }
             switch action {
@@ -24,7 +24,7 @@ extension AppController {
 
     private func todosChanged(_ json: String) {
         refreshOverdueBadge()
-        // Riprogramma i promemoria poco dopo l'ultima modifica (non a ogni tasto)
+        // Reschedule reminders shortly after the last change (not on every keystroke)
         reminderWork?.cancel()
         let work = DispatchWorkItem { TodoReminders.reschedule(from: json) }
         reminderWork = work

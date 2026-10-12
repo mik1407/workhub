@@ -1,117 +1,117 @@
 # WorkHub
 
-Contenitore macOS per Gmail, Slack, Google Calendar, Claude, ChatGPT e WhatsApp. App nativa Swift + WebKit, nessuna dipendenza.
+macOS container for Gmail, Slack, Google Calendar, Claude, ChatGPT and WhatsApp. Native Swift + WebKit app, no dependencies.
 
-## Build e installazione
+## Build and install
 
-Requisiti: macOS 12 o successivo, Xcode Command Line Tools (`xcode-select --install`).
+Requirements: macOS 12 or later, Xcode Command Line Tools (`xcode-select --install`).
 
-Dalla cartella del progetto:
+From the project folder:
 
 ```bash
-./setup-signing.sh      # una volta sola: crea il certificato "WorkHub Dev"
-./build.sh install      # compila, installa in /Applications e avvia
-./build.sh dmg          # oppure: crea WorkHub-<versione>.dmg da aprire e trascinare in Applicazioni
-./build.sh test         # esegue i test della logica (cartella Tests/), senza creare l'app
+./setup-signing.sh      # once only: creates the "WorkHub Dev" certificate
+./build.sh install      # builds, installs to /Applications and launches
+./build.sh dmg          # or: creates WorkHub-<version>.dmg to open and drag into Applications
+./build.sh test         # runs the logic tests (Tests/ folder) without building the app
 ```
 
-La build è sempre per macOS 12 o successivo, la stessa versione minima dichiarata in `Info.plist`.
+The build always targets macOS 12 or later, the same minimum version declared in `Info.plist`.
 
-Se apri WorkHub da fuori Applicazioni (DMG, Download, cartella di build), propone di spostarsi lì da sola.
-Dal menu WorkHub puoi attivare "Open at Login" (macOS 13 o successivo).
-Per tenerla nel Dock: click destro sull'icona > Opzioni > Mantieni nel Dock.
+If you open WorkHub from outside Applications (DMG, Downloads, build folder), it offers to move itself there.
+From the WorkHub menu you can turn on "Open at Login" (macOS 13 or later).
+To keep it in the Dock: right-click the icon > Options > Keep in Dock.
 
-Con il certificato la firma resta uguale tra una build e l'altra, quindi macOS non richiede di nuovo
-l'accesso al portachiavi né il microfono. La prima build firmata lo chiede un'ultima volta:
-inserisci la password del Mac e scegli "Always Allow".
+With the certificate the signature stays the same from one build to the next, so macOS doesn't ask again
+for keychain or microphone access. The first signed build asks one last time:
+enter your Mac password and choose "Always Allow".
 
-Altri Mac: il DMG funziona, ma senza un certificato Developer ID di Apple macOS mostrerà l'avviso
-"sviluppatore non identificato" (si sblocca da Impostazioni di Sistema > Privacy e sicurezza > Apri comunque).
+Other Macs: the DMG works, but without an Apple Developer ID certificate macOS will show the
+"unidentified developer" warning (unblock it in System Settings > Privacy & Security > Open Anyway).
 
-## Primo avvio
+## First launch
 
-1. Consenti le notifiche quando macOS lo chiede.
-2. Fai login in ogni servizio. Gmail e Calendar condividono la sessione Google, quindi basta un login.
-3. WhatsApp: scansiona il QR dal telefono.
-4. Attiva le notifiche desktop dentro i servizi che le hanno spente di default:
-   Gmail (Impostazioni > Generali > Notifiche desktop) e Calendar (Impostazioni > Notifiche).
+1. Allow notifications when macOS asks.
+2. Sign in to each service. Gmail and Calendar share the Google session, so signing in once is enough.
+3. WhatsApp: scan the QR code with your phone.
+4. Turn on desktop notifications in the services that have them off by default:
+   Gmail (Settings > General > Desktop notifications) and Calendar (Settings > Notifications).
 
-I login restano salvati tra un avvio e l'altro.
+Sign-ins are kept between launches.
 
-## Uso
+## Usage
 
-| Azione | Scorciatoia |
+| Action | Shortcut |
 |---|---|
-| Vai al servizio 1–6 | ⌘1 … ⌘6 |
-| Apri/chiudi il pannello Todos | ⌘T (o l'icona nella barra destra) |
-| Apri/chiudi il pannello Focus | ⌘⇧F (o il cronometro nella barra destra) |
-| Ricarica servizio / tutti | ⌘R / ⌘⇧R |
-| Torna alla pagina iniziale del servizio | ⌘⇧H |
-| Indietro / Avanti | ⌘[ / ⌘] |
-| Nascondi finestra (i servizi restano attivi) | ⌘W |
+| Go to service 1–6 | ⌘1 … ⌘6 |
+| Open/close the Todos panel | ⌘T (or the icon in the right bar) |
+| Open/close the Focus panel | ⌘⇧F (or the stopwatch in the right bar) |
+| Reload service / all | ⌘R / ⌘⇧R |
+| Go back to the service's home page | ⌘⇧H |
+| Back / Forward | ⌘[ / ⌘] |
+| Hide window (services stay active) | ⌘W |
 
-Link esterni: si aprono nel browser predefinito. ⌘+click forza il browser anche per link interni.
-Download: finiscono in ~/Downloads.
+External links: open in the default browser. ⌘+click forces the browser for internal links too.
+Downloads: saved to ~/Downloads.
 
 ## Todos
 
-Pannello a destra con due liste: Personal e Work.
+Panel on the right with two lists: Personal and Work.
 
-- Invio nel campo "Add a todo..." aggiunge in cima alla lista aperta.
-- Cerchio: completa. I completati finiscono nella sezione "N done", richiudibile.
-- Trascina un todo su o giù per riordinarlo; trascinalo sul nome dell'altra lista (in alto) per spostarlo lì.
-  Esc durante il trascinamento annulla.
-- Doppio click sul testo: modifica (testo vuoto = elimina). La × compare al passaggio del mouse.
-- Scadenza: icona calendario al passaggio del mouse (più tardi oggi, domani alle 9, lunedì prossimo,
-  oppure data e ora a scelta). L'etichetta è rossa se scaduto, blu se scade oggi.
-- Alla scadenza arriva una notifica macOS (anche con WorkHub chiusa) con "Mark as done" e
-  "Remind me in 1 hour"; cliccandola si apre il pannello sul todo. L'icona Todos mostra quanti sono scaduti.
-- Dati: `~/Library/Application Support/WorkHub/todos.json`, salvati a ogni modifica.
-  A ogni avvio una copia va in `todos.json.bak`. Se il file non si legge, l'app parte con la lista vuota
-  e conserva l'originale come `todos-broken-<data>.json`.
+- Return in the "Add a todo..." field adds to the top of the open list.
+- Circle: completes. Completed todos go to the collapsible "N done" section.
+- Drag a todo up or down to reorder it; drag it onto the other list's name (at the top) to move it there.
+  Esc while dragging cancels.
+- Double-click the text: edit (empty text = delete). The × appears on hover.
+- Due date: calendar icon on hover (later today, tomorrow at 9, next Monday,
+  or a date and time of your choice). The label is red when overdue, blue when due today.
+- When a todo is due, a macOS notification arrives (even with WorkHub closed) with "Mark as done" and
+  "Remind me in 1 hour"; clicking it opens the panel on that todo. The Todos icon shows how many are overdue.
+- Data: `~/Library/Application Support/WorkHub/todos.json`, saved on every change.
+  On every launch a copy goes to `todos.json.bak`. If the file can't be read, the app starts with an empty list
+  and keeps the original as `todos-broken-<date>.json`.
 
 ## Focus
 
-Timer Pomodoro nella barra destra: 25 minuti di focus, 5 di pausa, e si ripete finché premi Stop.
+Pomodoro timer in the right bar: 25 minutes of focus, 5 of break, repeating until you press Stop.
 
-- Start focus avvia il ciclo; Pause/Resume, Skip passa subito alla fase successiva, Stop azzera.
-  Spazio avvia o mette in pausa quando il pannello è attivo.
-- Il timer continua anche a pannello chiuso: l'anello attorno al cronometro nella barra mostra
-  l'avanzamento (blu = focus, verde = pausa) e il tooltip il tempo che manca.
-- A ogni cambio di fase arriva una notifica; cliccandola si apre il pannello.
-- Suono di sottofondo: suona durante il focus e sfuma in pausa. Nel pannello scegli il suono
-  (fuori dal focus, toccandolo ne senti 6 secondi di anteprima), il volume e l'interruttore.
-  I suoni hanno lo stesso volume percepito e si ripetono senza stacchi.
-- I suoni stanno in `~/Library/Application Support/WorkHub/Sounds/` (la cartella `Sounds/` del progetto
-  viene copiata lì da `build.sh`). Per aggiungerne: "Add sounds…" nel pannello, o copia file m4a, mp3,
-  wav o caf nella cartella. Non sono inclusi nell'app né nel DMG.
-- Conta le sessioni di focus completate oggi (una sessione saltata non conta).
+- Start focus starts the cycle; Pause/Resume; Skip jumps straight to the next phase; Stop resets.
+  Space starts or pauses when the panel is active.
+- The timer keeps running with the panel closed: the ring around the stopwatch in the bar shows
+  progress (blue = focus, green = break) and the tooltip shows the time left.
+- A notification arrives at every phase change; clicking it opens the panel.
+- Background sound: plays during focus and fades out during breaks. In the panel you choose the sound
+  (outside focus, tapping one plays a 6-second preview), the volume and the on/off switch.
+  The sounds have the same perceived loudness and loop seamlessly.
+- Sounds live in `~/Library/Application Support/WorkHub/Sounds/` (the project's `Sounds/` folder
+  is copied there by `build.sh`). To add more: "Add sounds…" in the panel, or copy m4a, mp3,
+  wav or caf files into the folder. They are not included in the app or the DMG.
+- Counts the focus sessions completed today (a skipped session doesn't count).
 
-## Impostazioni (⌘,)
+## Settings (⌘,)
 
-- **Services**: aggiungi servizi dal catalogo (Gmail, Outlook, Teams, Slack, Notion, Linear, WhatsApp,
-  Telegram…) o qualsiasi sito; riordina trascinando (l'ordine vale anche per ⌘1–9); cambia nome,
-  indirizzo, badge e icona; "Sign out and reset data" esce dal servizio cancellandone i dati.
-- **Notifications**: pausa per 1 ora o fino a domani, contenuto nascosto, notifiche e suono per servizio,
-  silenzio durante il focus con le eccezioni che scegli.
-- **Focus**: durate, pausa lunga ogni N sessioni, avvio automatico della fase successiva o attesa del click,
-  suono di fine fase.
-- **Appearance**: tema Dark, Light o Automatic (segue macOS) per cornice, barre, pannelli e Impostazioni.
-  I servizi non cambiano: seguono sempre il tema di macOS.
+- **Services**: add services from the catalog (Gmail, Outlook, Teams, Slack, Notion, Linear, WhatsApp,
+  Telegram…) or any website; reorder by dragging (the order also applies to ⌘1–9); change name,
+  address, badge and icon; "Sign out and reset data" signs out of the service and deletes its data.
+- **Notifications**: pause for 1 hour or until tomorrow, hidden content, notifications and sound per service,
+  silence during focus with the exceptions you choose.
+- **Focus**: durations, a long break every N sessions, start the next phase automatically or wait for a click,
+  end-of-phase sound.
+- **Appearance**: Dark, Light or Automatic theme (follows macOS) for the frame, bars, panels and Settings.
+  Services don't change: they always follow the macOS theme.
 
-Tutto si applica subito e viene salvato in `~/Library/Application Support/WorkHub/settings.json`.
-Se lo modifichi a mano, un servizio scritto male viene ignorato (gli altri restano); se il file intero non si legge,
-l'app riparte dalle impostazioni iniziali e conserva l'originale come `settings-broken-<data>.json`.
-Altre cartelle utili: `icons/` (icone personalizzate), `Sounds/` (suoni del Focus), `todos.json`.
+Everything applies immediately and is saved to `~/Library/Application Support/WorkHub/settings.json`.
+If you edit it by hand, a malformed service is ignored (the others are kept); if the whole file can't be read,
+the app starts again from the default settings and keeps the original as `settings-broken-<date>.json`.
+Other useful files and folders: `icons/` (custom icons), `Sounds/` (Focus sounds), `todos.json`.
 
-Avvio automatico: menu WorkHub > "Open at Login". Per tenerla nel Dock: click destro sull'icona >
-Opzioni > Mantieni nel Dock.
+Launch at login: WorkHub menu > "Open at Login". To keep it in the Dock: right-click the icon >
+Options > Keep in Dock.
 
-## Limiti noti
+## Known limitations
 
-- Badge Slack: legge il DOM di Slack, che cambia spesso. Se il badge non compare, i selettori sono in
-  `Sources/Scripts.swift` (`badgeTemplate`, modalità `slack`). Per ispezionare la pagina: Safari > Sviluppo > WorkHub.
-- Badge Gmail: conta i non letti della Posta in arrivo.
-- Calendar, Claude e ChatGPT non hanno badge, solo notifiche dove previste.
-- Le notifiche push a servizio "dormiente" (service worker in background) non sono supportate da WebKit
-  nelle app: le notifiche arrivano finché l'app è aperta, anche con la finestra chiusa.
+- Slack badge: it reads Slack's DOM, which changes often. If the badge doesn't show up, the selectors are in
+  `Sources/Scripts.swift` (`badgeTemplate`, `slack` mode). To inspect the page: Safari > Develop > WorkHub.
+- Gmail badge: counts unread messages in the Inbox.
+- Calendar, Claude and ChatGPT have no badge, only notifications where available.
+- Push notifications for a "sleeping" service (background service worker) aren't supported by WebKit
+  in apps: notifications arrive as long as the app is open, even with the window closed.

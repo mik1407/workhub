@@ -1,12 +1,12 @@
 #!/bin/bash
-# Crea (una volta sola) il certificato self-signed "WorkHub Dev" nel portachiavi di login.
-# Con una firma stabile macOS ricorda i permessi (portachiavi, microfono) tra una build e l'altra.
+# Creates (once only) the self-signed "WorkHub Dev" certificate in the login keychain.
+# With a stable signature macOS remembers permissions (keychain, microphone) from one build to the next.
 set -euo pipefail
 NAME="WorkHub Dev"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
 
 if security find-identity -p codesigning | grep -q "\"$NAME\""; then
-  echo "Certificato \"$NAME\" già presente, niente da fare."
+  echo "Certificate \"$NAME\" already present, nothing to do."
   exit 0
 fi
 
@@ -26,13 +26,13 @@ keyUsage = critical,digitalSignature
 extendedKeyUsage = critical,codeSigning
 CNF
 
-# /usr/bin/openssl (LibreSSL di sistema) produce un .p12 che "security import" accetta.
+# /usr/bin/openssl (the system LibreSSL) produces a .p12 that "security import" accepts.
 /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -config "$TMP/cert.cnf" -keyout "$TMP/key.pem" -out "$TMP/cert.pem" 2>/dev/null
 /usr/bin/openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" \
   -name "$NAME" -out "$TMP/cert.p12" -passout pass:workhub
 
-# -T /usr/bin/codesign: codesign può usare la chiave senza chiedere ogni volta.
+# -T /usr/bin/codesign: codesign can use the key without asking every time.
 security import "$TMP/cert.p12" -k "$KEYCHAIN" -P workhub -T /usr/bin/codesign
 
-echo "Fatto: certificato \"$NAME\" creato. Ora lancia ./build.sh install"
+echo "Done: certificate \"$NAME\" created. Now run ./build.sh install"

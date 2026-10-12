@@ -36,7 +36,7 @@
   button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   svg { display: block; }
 
-  /* Navigazione */
+  /* Navigation */
   nav { flex: none; width: 196px; padding: 18px 10px; border-right: 1px solid var(--line); }
   .nav-item {
     display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 10px;
@@ -52,7 +52,7 @@
   h1 { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; }
   .subtitle { margin-top: 3px; color: var(--muted); font-size: 12.5px; }
 
-  /* Controlli */
+  /* Controls */
   .btn {
     flex: none; height: 30px; padding: 0 12px; border: 0; border-radius: 8px;
     background: var(--surface-2); font-size: 13px; font-weight: 500;
@@ -91,7 +91,7 @@
   .row .label span { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
   .row select.field { width: auto; min-width: 150px; }
 
-  /* Servizi */
+  /* Services */
   .services { display: grid; grid-template-columns: minmax(220px, 280px) 1fr; gap: 16px; align-items: start; }
   .list { padding: 6px; border-radius: 12px; background: var(--surface); }
   .svc {
@@ -131,7 +131,7 @@
   .danger-zone { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
   .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
 
-  /* Catalogo */
+  /* Catalog */
   .sheet-backdrop {
     position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
     background: rgba(3, 7, 15, 0.6);
@@ -156,7 +156,7 @@
   .custom { display: grid; grid-template-columns: 1fr 1.6fr auto; gap: 8px; align-items: center; }
   .sheet-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
 
-  /* Notifiche */
+  /* Notifications */
   .row .label strong.status { display: flex; align-items: center; gap: 10px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fca8e; flex: none; }
   .dot.paused { background: #f2b84b; }
@@ -168,7 +168,7 @@
   .svc-cell { display: flex; align-items: center; gap: 10px; }
   .muted-col { opacity: 0.35; }
 
-  /* Aspetto */
+  /* Appearance */
   .segmented { display: inline-flex; flex: none; gap: 2px; padding: 3px; border-radius: 9px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
   .segmented button { height: 26px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 500; }
   .segmented button:hover { color: var(--text); }
@@ -177,7 +177,7 @@
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--surface-2); }
 
-  /* Tema chiaro: l'app imposta data-theme="light" sulla pagina */
+  /* Light theme: the app sets data-theme="light" on the page */
   :root[data-theme="light"] {
     --bg: #ffffff;
     --surface: #f3f5f8;
@@ -316,7 +316,7 @@
     </section>
   </main>
 
-  <!-- Catalogo servizi -->
+  <!-- Service catalog -->
   <div class="sheet-backdrop" id="sheet" hidden>
     <div class="sheet" role="dialog" aria-label="Add service">
       <h2>Add service</h2>
@@ -340,7 +340,7 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
 
-  // Stato inviato dall'app (valori iniziali di riserva)
+  // State sent by the app (fallback initial values)
   let S = { version: 1, services: [], notifications: {}, focus: { focusMinutes: 25, breakMinutes: 5, longBreakMinutes: 15, longBreakEvery: 0, autoStart: true, chime: false } };
   let X = { catalog: [], icons: {}, customIcons: [] };
   let tab = 'services';
@@ -352,7 +352,7 @@
   const send = (message) => { try { window.webkit.messageHandlers.settings.postMessage(message); } catch (_) {} };
   const save = () => send({ action: 'save', settings: JSON.stringify(S) });
   const host = (url) => { try { return new URL(url).host; } catch (_) { return url; } };
-  // Stessa regola di baseDomain in Services.swift; l'elenco dei suffissi arriva dall'app.
+  // Same rule as baseDomain in Services.swift; the list of suffixes comes from the app.
   const baseDomain = (url) => {
     let h = '';
     try { h = new URL(url).hostname.toLowerCase(); } catch (_) { return ''; }
@@ -396,7 +396,7 @@
     button.disabled = !!disabled;
   }
 
-  // ---------- Navigazione ----------
+  // ---------- Navigation ----------
   document.querySelectorAll('.nav-item').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; render(); }));
 
   function render() {
@@ -527,7 +527,7 @@
     return b;
   }
 
-  // Selezione e riordino con trascinamento
+  // Selection and drag-to-reorder
   $('svc-list').addEventListener('mousedown', (e) => {
     const row = e.target.closest && e.target.closest('.svc');
     if (!row || e.button !== 0) return;
@@ -561,7 +561,7 @@
   function endDrag() {
     const d = drag;
     drag = null;
-    if (!d.active) {                       // semplice click: seleziona
+    if (!d.active) {                       // just a click: select
       selectedId = d.id;
       renderServices();
       return;
@@ -577,7 +577,7 @@
     renderServices();
   }
 
-  // ---------- Catalogo ----------
+  // ---------- Catalog ----------
   $('add-service').addEventListener('click', () => {
     $('sheet').hidden = false;
     $('catalog-search').value = '';
@@ -700,7 +700,7 @@
 
   $('hide-content').addEventListener('click', () => { S.notifications.hideContent = !S.notifications.hideContent; save(); renderNotifications(); });
   $('silence-focus').addEventListener('click', () => { S.notifications.silenceDuringFocus = !S.notifications.silenceDuringFocus; save(); renderNotifications(); });
-  setInterval(() => { if (tab === 'notifications') renderNotifications(); }, 30000);   // la pausa scade da sola
+  setInterval(() => { if (tab === 'notifications') renderNotifications(); }, 30000);   // the pause expires on its own
 
   // ---------- Focus ----------
   function fillSelect(select, values, format, current) {
@@ -735,7 +735,7 @@
   $('chime').addEventListener('click', () => { S.focus.chime = !S.focus.chime; save(); renderFocus(); });
 
   // ---------- Appearance ----------
-  // I colori della pagina li cambia l'app (data-theme), anche per "Automatic".
+  // The app changes the page colors (data-theme), including for "Automatic".
   function renderAppearance() {
     const current = S.appearance || 'dark';
     document.querySelectorAll('#theme button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.value === current)));
@@ -747,7 +747,7 @@
     renderAppearance();
   }));
 
-  // ---------- Dall'app ----------
+  // ---------- From the app ----------
   window.settingsUpdate = (payload) => {
     if (payload.settings) {
       S = payload.settings;
@@ -760,7 +760,7 @@
     render();
   };
 
-  // File trascinati da fuori: ignorati
+  // Files dragged in from outside: ignored
   document.addEventListener('dragover', (e) => e.preventDefault());
   document.addEventListener('drop', (e) => e.preventDefault());
 

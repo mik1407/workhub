@@ -1,16 +1,16 @@
 import Cocoa
 import WebKit
 
-/// Pannello Todos: pagina Resources/todos.html.
-/// I dati vivono in ~/Library/Application Support/WorkHub/todos.json, salvati a ogni modifica.
+/// Todos panel: page Resources/todos.html.
+/// The data lives in ~/Library/Application Support/WorkHub/todos.json, saved on every change.
 final class TodoPanel {
     static let width = LocalPanel.width
 
     let panel: LocalPanel
     var webView: WKWebView { panel.webView }
-    /// Ultimo stato salvato (JSON), usato per promemoria e badge.
+    /// Last saved state (JSON), used for reminders and the badge.
     private(set) var lastState: String
-    /// Chiamato a ogni salvataggio con lo stato completo.
+    /// Called on every save with the full state.
     var onSaved: ((String) -> Void)?
     private let fileURL: URL
     private var loaded = false
@@ -22,16 +22,16 @@ final class TodoPanel {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         fileURL = folder.appendingPathComponent("todos.json")
 
-        // I dati salvati arrivano alla pagina prima che parta il suo script.
+        // The saved data reaches the page before its script starts.
         var saved = (try? String(contentsOf: fileURL, encoding: .utf8)) ?? "null"
         if FileManager.default.fileExists(atPath: fileURL.path) {
             if Self.isReadable(saved) {
-                // Copia di sicurezza dello stato all'avvio: todos.json.bak
+                // Backup copy of the state at launch: todos.json.bak
                 let backup = folder.appendingPathComponent("todos.json.bak")
                 try? FileManager.default.removeItem(at: backup)
                 try? FileManager.default.copyItem(at: fileURL, to: backup)
             } else {
-                // La pagina partirebbe vuota e al primo salvataggio sovrascriverebbe il file: lo mette da parte.
+                // The page would start empty and overwrite the file on the first save: set it aside.
                 keepBrokenCopy(of: fileURL)
                 saved = "null"
             }
@@ -58,24 +58,24 @@ final class TodoPanel {
         runWhenLoaded("window.todosFocusInput && window.todosFocusInput()")
     }
 
-    /// Mostra ed evidenzia un todo (notifica cliccata).
+    /// Shows and highlights a todo (notification clicked).
     func reveal(_ id: String) {
         runWhenLoaded("window.todosReveal && window.todosReveal(\(LocalPanel.jsString(id)))")
     }
 
-    /// Azione dalla notifica: "done" oppure "snooze" (un'ora).
+    /// Action from the notification: "done" or "snooze" (one hour).
     func apply(_ action: String, to id: String) {
         runWhenLoaded("window.todosApply && window.todosApply({id: \(LocalPanel.jsString(id)), action: \(LocalPanel.jsString(action))})")
     }
 
-    /// Lo stesso controllo della pagina: un oggetto JSON con l'elenco "todos".
+    /// Same check as the page: a JSON object with a "todos" list.
     static func isReadable(_ json: String) -> Bool {
         guard let data = json.data(using: .utf8),
               let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return false }
         return object["todos"] is [Any]
     }
 
-    /// Se l'app è stata aperta da una notifica la pagina potrebbe non essere ancora pronta.
+    /// If the app was opened from a notification, the page may not be ready yet.
     private func runWhenLoaded(_ script: String) {
         if loaded { panel.run(script) } else { queued.append(script) }
     }

@@ -1,9 +1,9 @@
 import Foundation
 import AVFoundation
 
-/// Ciclo Pomodoro: 25 minuti di focus, 5 di pausa, e si ripete finché non lo fermi.
-/// Il tempo si basa sull'orario reale: niente ritardi accumulati, e dopo uno stop del Mac
-/// riparte dalla fase giusta.
+/// Pomodoro cycle: 25 minutes of focus, 5 of break, repeating until you stop it.
+/// Timing is based on the real clock: no accumulated drift, and after the Mac sleeps
+/// it resumes in the right phase.
 final class FocusTimer {
     enum Phase: String {
         case idle, focus
@@ -13,14 +13,14 @@ final class FocusTimer {
         var isBreak: Bool { self == .rest || self == .longRest }
     }
 
-    /// Durate e comportamento (Impostazioni > Focus).
+    /// Durations and behavior (Settings > Focus).
     private(set) var settings = FocusSettings()
-    /// true quando una fase è finita e la successiva aspetta un click (avvio automatico disattivato).
+    /// true when a phase has ended and the next one is waiting for a click (auto-start off).
     private(set) var waiting = false
 
     private(set) var phase: Phase = .idle
     private(set) var isPaused = false
-    private(set) var round = 0                 // numero della sessione di focus in corso
+    private(set) var round = 0                 // number of the current focus session
     private var phaseEnd = Date()
     private var pausedRemaining: TimeInterval = 0
     private var ticker: Timer?
@@ -30,18 +30,18 @@ final class FocusTimer {
     private var previewEnd: DispatchWorkItem?
     private let defaults = UserDefaults.standard
 
-    /// Chiamato a ogni aggiornamento (circa due volte al secondo mentre il timer gira).
+    /// Called on every update (about twice a second while the timer runs).
     var onChange: (() -> Void)?
-    /// Chiamato quando si passa da focus a pausa o viceversa (per le notifiche).
+    /// Called when switching from focus to break or vice versa (for notifications).
     var onPhaseChange: ((Phase) -> Void)?
 
-    /// Suono di sottofondo attivo durante il focus.
+    /// Background sound enabled during focus.
     var soundEnabled: Bool {
         get { defaults.object(forKey: "focusRain") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "focusRain") }
     }
 
-    /// Suono scelto (se non esiste più, il primo disponibile; di base la pioggia).
+    /// Chosen sound (if it no longer exists, the first available; rain by default).
     var currentSound: SoundLibrary.Sound? {
         let saved = defaults.string(forKey: "focusSound") ?? "bgm_Rain.m4a"
         return sounds.first { $0.id == saved } ?? sounds.first { $0.id == "bgm_Rain.m4a" } ?? sounds.first
@@ -59,14 +59,14 @@ final class FocusTimer {
 
     var duration: TimeInterval { duration(of: phase) }
 
-    /// Sessioni di focus completate oggi (si azzera a mezzanotte).
+    /// Focus sessions completed today (resets at midnight).
     var completedToday: Int {
         defaults.string(forKey: "focusDay") == Self.today() ? defaults.integer(forKey: "focusCount") : 0
     }
 
-    // MARK: - Comandi
+    // MARK: - Commands
 
-    /// Nuove impostazioni: valgono dalla prossima fase (quella in corso non cambia).
+    /// New settings: they apply from the next phase (the current one does not change).
     func apply(_ newSettings: FocusSettings) {
         settings = newSettings
         onChange?()
@@ -92,7 +92,7 @@ final class FocusTimer {
         onChange?()
     }
 
-    /// Passa subito alla fase successiva (una sessione saltata non conta come completata).
+    /// Moves straight to the next phase (a skipped session does not count as completed).
     func skip() {
         guard phase != .idle else { return }
         if phase == .focus {
@@ -120,7 +120,7 @@ final class FocusTimer {
         onChange?()
     }
 
-    /// Sceglie il suono. Se il focus è in corso cambia subito; altrimenti fa sentire un'anteprima di 6 secondi.
+    /// Picks the sound. If focus is running it switches right away; otherwise it plays a 6-second preview.
     func selectSound(_ id: String) {
         guard let sound = sounds.first(where: { $0.id == id }) else { return }
         defaults.set(id, forKey: "focusSound")
@@ -154,7 +154,7 @@ final class FocusTimer {
         onChange?()
     }
 
-    /// Messaggi dal pannello: {action: "start" | "pause" | "skip" | "stop" | "sound" | "select" | "volume", value}
+    /// Messages from the panel: {action: "start" | "pause" | "skip" | "stop" | "sound" | "select" | "volume", value}
     func handle(_ body: Any) {
         guard let message = body as? [String: Any], let action = message["action"] as? String else { return }
         switch action {
@@ -172,7 +172,7 @@ final class FocusTimer {
         }
     }
 
-    /// Stato per il pannello, in JSON.
+    /// State for the panel, as JSON.
     var stateJSON: String {
         let state: [String: Any] = [
             "phase": phase.rawValue,
@@ -197,7 +197,7 @@ final class FocusTimer {
         return json
     }
 
-    // MARK: - Meccanica
+    // MARK: - Mechanics
 
     private func duration(of phase: Phase) -> TimeInterval {
         switch phase {
@@ -207,7 +207,7 @@ final class FocusTimer {
         }
     }
 
-    /// Dopo la sessione numero `session`: pausa lunga ogni N sessioni (se attiva), altrimenti breve.
+    /// After session number `session`: a long break every N sessions (if enabled), otherwise a short one.
     private func nextBreak(after session: Int) -> Phase {
         let every = settings.longBreakEvery
         return every > 0 && session > 0 && session % every == 0 ? .longRest : .rest
@@ -238,8 +238,8 @@ final class FocusTimer {
             onChange?()
             return
         }
-        // Fase finita. Con l'avvio automatico si recuperano anche più fasi (Mac in stop);
-        // altrimenti si passa alla fase successiva e si aspetta un click.
+        // Phase over. With auto-start, several phases may be caught up (Mac asleep);
+        // otherwise move to the next phase and wait for a click.
         var next = phase
         var end = phaseEnd
         var finishedFocus = 0
@@ -269,7 +269,7 @@ final class FocusTimer {
         onChange?()
     }
 
-    /// true quando il suono deve suonare: focus in corso, non in pausa, suono attivo.
+    /// true when the sound should play: focus running, not paused, sound enabled.
     private var isSoundDue: Bool { phase == .focus && !isPaused && soundEnabled && currentSound != nil }
 
     private func updateSound() {

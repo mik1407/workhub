@@ -1,21 +1,21 @@
 import Cocoa
 
-/// Pulsante rotondo della barra destra (icona SF Symbol, stato attivo in blu).
+/// Round button of the right rail (SF Symbol icon, active state in blue).
 final class RailButton: NSView {
     static let size: CGFloat = 44
 
     var isActive = false { didSet { needsDisplay = true; updateTint() } }
-    /// Anello di avanzamento attorno al pulsante (0…1); nil = nessun anello.
+    /// Progress ring around the button (0…1); nil = no ring.
     var progress: CGFloat? { didSet { if oldValue != progress { needsDisplay = true } } }
     var progressColor: NSColor = Theme.todoAccent { didSet { needsDisplay = true } }
     var progressDimmed = false { didSet { if oldValue != progressDimmed { needsDisplay = true } } }
-    /// Numero rosso in alto a destra (0 = nascosto).
+    /// Red number at the top right (0 = hidden).
     var badgeCount = 0 { didSet { if oldValue != badgeCount { needsDisplay = true } } }
     var onClick: (() -> Void)?
     private let imageView = NSImageView()
     private var hovering = false { didSet { needsDisplay = true; updateTint() } }
 
-    /// Icona disegnata a mano (immagine template: prende il colore del pulsante).
+    /// Hand-drawn icon (template image: takes the button's color).
     init(image: NSImage, tooltip: String) {
         super.init(frame: NSRect(x: 0, y: 0, width: Self.size, height: Self.size))
         imageView.image = image
@@ -34,7 +34,7 @@ final class RailButton: NSView {
 
     override var isFlipped: Bool { true }
 
-    // Tutti i click sul pulsante (anche sopra l'icona) arrivano qui.
+    // All clicks on the button (even over the icon) land here.
     override func hitTest(_ point: NSPoint) -> NSView? {
         frame.contains(point) ? self : nil
     }
@@ -51,7 +51,7 @@ final class RailButton: NSView {
     override func mouseExited(with event: NSEvent) { hovering = false }
     override func mouseDown(with event: NSEvent) { onClick?() }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-    // Manina al passaggio del mouse: si capisce che è cliccabile.
+    // Pointing hand on hover: shows that it is clickable.
     override func cursorUpdate(with event: NSEvent) { NSCursor.pointingHand.set() }
 
     func updateTint() {
@@ -95,7 +95,7 @@ final class RailButton: NSView {
         track.lineWidth = 2
         Theme.progressTrack.setStroke()
         track.stroke()
-        // Vista capovolta: angoli crescenti = senso orario, -90° = in alto.
+        // Flipped view: increasing angles = clockwise, -90° = top.
         let arc = NSBezierPath()
         arc.appendArc(withCenter: center, radius: radius, startAngle: -90,
                       endAngle: -90 + 360 * min(max(progress, 0.001), 1), clockwise: false)
@@ -106,19 +106,19 @@ final class RailButton: NSView {
     }
 }
 
-/// Icone vettoriali della barra destra.
+/// Vector icons for the right rail.
 enum RailIcons {
-    /// Doppia spunta del pannello Todos.
+    /// Double check mark for the Todos panel.
     static func doubleCheck(size: CGFloat = 20) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size), flipped: true) { rect in
-            let s = rect.width / 24            // disegno su griglia 24×24
+            let s = rect.width / 24            // drawn on a 24×24 grid
             func p(_ x: CGFloat, _ y: CGFloat) -> NSPoint { NSPoint(x: x * s, y: y * s) }
             let path = NSBezierPath()
             path.lineWidth = 2 * s
             path.lineCapStyle = .round
             path.lineJoinStyle = .round
-            path.move(to: p(2, 12.5)); path.line(to: p(7, 17.5)); path.line(to: p(18, 6.5))     // prima spunta
-            path.move(to: p(13, 16)); path.line(to: p(14.5, 17.5)); path.line(to: p(22, 10))    // seconda spunta
+            path.move(to: p(2, 12.5)); path.line(to: p(7, 17.5)); path.line(to: p(18, 6.5))     // first check
+            path.move(to: p(13, 16)); path.line(to: p(14.5, 17.5)); path.line(to: p(22, 10))    // second check
             NSColor.black.setStroke()
             path.stroke()
             return true
@@ -130,23 +130,23 @@ enum RailIcons {
 }
 
 extension RailIcons {
-    /// Rotella delle Impostazioni (simbolo di sistema).
+    /// Settings gear (system symbol).
     static func gear() -> NSImage {
         let configuration = NSImage.SymbolConfiguration(pointSize: 17, weight: .regular)
         return NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")?
             .withSymbolConfiguration(configuration) ?? NSImage(size: NSSize(width: 20, height: 20))
     }
 
-    /// Cronometro del pannello Focus.
+    /// Stopwatch for the Focus panel.
     static func stopwatch(size: CGFloat = 20) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size), flipped: true) { rect in
             let s = rect.width / 24
             func p(_ x: CGFloat, _ y: CGFloat) -> NSPoint { NSPoint(x: x * s, y: y * s) }
             let path = NSBezierPath(ovalIn: NSRect(x: 4.5 * s, y: 6 * s, width: 15 * s, height: 15 * s))
-            path.move(to: p(9.5, 2.5)); path.line(to: p(14.5, 2.5))     // pulsante
-            path.move(to: p(12, 2.5)); path.line(to: p(12, 6))          // gambo
-            path.move(to: p(12, 13.5)); path.line(to: p(12, 9.5))       // lancetta
-            path.move(to: p(18.2, 6.6)); path.line(to: p(19.6, 5.2))    // tacca laterale
+            path.move(to: p(9.5, 2.5)); path.line(to: p(14.5, 2.5))     // button
+            path.move(to: p(12, 2.5)); path.line(to: p(12, 6))          // stem
+            path.move(to: p(12, 13.5)); path.line(to: p(12, 9.5))       // hand
+            path.move(to: p(18.2, 6.6)); path.line(to: p(19.6, 5.2))    // side notch
             path.lineWidth = 2 * s
             path.lineCapStyle = .round
             path.lineJoinStyle = .round
@@ -160,7 +160,7 @@ extension RailIcons {
     }
 }
 
-/// Barra verticale a destra della finestra.
+/// Vertical bar on the right side of the window.
 final class RightRail: NSView {
     static let width: CGFloat = 56
     private var buttons: [RailButton] = []

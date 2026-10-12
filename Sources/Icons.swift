@@ -1,8 +1,8 @@
 import Cocoa
 
-/// Icone dei servizi.
-/// - Override manuale: ~/Library/Application Support/WorkHub/icons/<id>.png (vince sempre).
-/// - Automatica: scaricata dalla pagina del servizio dopo il login e salvata in icons/auto/<id>.
+/// Service icons.
+/// - Manual override: ~/Library/Application Support/WorkHub/icons/<id>.png (always wins).
+/// - Automatic: downloaded from the service's page after login and saved in icons/auto/<id>.
 enum IconStore {
     static var directory: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -19,7 +19,7 @@ enum IconStore {
         return NSImage(data: data)
     }
 
-    /// Icona scelta in Impostazioni: salvata come PNG e usata al posto della favicon.
+    /// Icon chosen in Settings: saved as PNG and used instead of the favicon.
     static func setOverride(id: String, from url: URL) {
         guard let image = NSImage(contentsOf: url),
               let tiff = image.tiffRepresentation,
@@ -46,7 +46,7 @@ enum IconStore {
         try? data.write(to: dir.appendingPathComponent(id))
     }
 
-    /// Scarica i candidati in ordine e tiene l'immagine con più pixel (si ferma a ≥120px).
+    /// Downloads the candidates in order and keeps the image with the most pixels (stops at ≥120px).
     static func fetchBest(from urls: [URL], completion: @escaping (NSImage?, Data?) -> Void) {
         var best: (image: NSImage, data: Data, pixels: Int)?
         func next(_ i: Int) {

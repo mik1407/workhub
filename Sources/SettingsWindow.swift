@@ -1,8 +1,8 @@
 import Cocoa
 import WebKit
 
-/// Finestra Impostazioni (⌘,): pagina Resources/settings.html.
-/// La pagina invia {action: "save" | "resetData" | "changeIcon" | "resetIcon", …}; l'app risponde con settingsUpdate.
+/// Settings window (⌘,): page Resources/settings.html.
+/// The page sends {action: "save" | "resetData" | "changeIcon" | "resetIcon", …}; the app replies with settingsUpdate.
 final class SettingsWindow: NSObject {
     let window: NSWindow
     private let panel = LocalPanel(page: "settings", handler: "settings")
@@ -40,7 +40,7 @@ final class SettingsWindow: NSObject {
         panel.applyTheme()
     }
 
-    /// Barra del titolo e sfondo come la pagina.
+    /// Title bar and background matching the page.
     private func applyWindowTheme() {
         window.appearance = NSAppearance(named: Theme.isLight ? .aqua : .darkAqua)
         window.backgroundColor = Theme.content

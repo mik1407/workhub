@@ -1,12 +1,12 @@
 import Foundation
 import AVFoundation
 
-/// Suoni di sottofondo del Focus: i file audio in ~/Library/Application Support/WorkHub/Sounds/.
-/// Non sono dentro l'app (e quindi nemmeno nel DMG): restano sul tuo Mac.
+/// Focus background sounds: the audio files in ~/Library/Application Support/WorkHub/Sounds/.
+/// They are not inside the app (so not in the DMG either): they stay on your Mac.
 enum SoundLibrary {
     struct Sound {
-        let id: String      // nome del file
-        let name: String    // nome mostrato
+        let id: String      // file name
+        let name: String    // display name
         let url: URL
     }
 
@@ -27,7 +27,7 @@ enum SoundLibrary {
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    /// Copia i file scelti nella cartella dei suoni; restituisce gli id aggiunti.
+    /// Copies the chosen files into the sounds folder; returns the ids added.
     static func add(_ urls: [URL]) -> [String] {
         let fileManager = FileManager.default
         try? fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -61,10 +61,10 @@ enum SoundLibrary {
     }
 }
 
-/// Riproduce un suono in loop continuo.
-/// - volume livellato tra i suoni (stessa intensità percepita);
-/// - giunzione del loop con dissolvenza incrociata (nessuno stacco alla ripetizione);
-/// - cambio suono con dissolvenza; in memoria resta solo il suono in uso (massimo ~60 s).
+/// Plays a sound in a continuous loop.
+/// - volume leveled across sounds (same perceived loudness);
+/// - loop seam joined with a crossfade (no audible cut on repeat);
+/// - sound changes fade; only the sound in use stays in memory (at most ~60 s).
 final class AmbientPlayer {
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
@@ -83,7 +83,7 @@ final class AmbientPlayer {
     private var observer: NSObjectProtocol?
 
     init() {
-        // Cambio di uscita audio (cuffie, AirPods): il motore si ferma e va riavviato.
+        // Audio output change (headphones, AirPods): the engine stops and must be restarted.
         observer = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange,
                                                           object: engine, queue: .main) { [weak self] _ in
             self?.restartAfterDeviceChange()
@@ -94,7 +94,7 @@ final class AmbientPlayer {
         if let observer = observer { NotificationCenter.default.removeObserver(observer) }
     }
 
-    /// Avvia il suono, o passa a un altro con una breve dissolvenza.
+    /// Starts the sound, or switches to another with a short fade.
     func play(url: URL, volume: Float) {
         if playing && currentURL == url && player.isPlaying {
             fade(to: volume, over: 0.8, then: nil)
@@ -133,7 +133,7 @@ final class AmbientPlayer {
         player.volume = volume
     }
 
-    // MARK: - Riproduzione
+    // MARK: - Playback
 
     private func start(_ buffer: AVAudioPCMBuffer, url: URL, volume: Float, token: Int) {
         guard playing, request == token else { return }
@@ -156,7 +156,7 @@ final class AmbientPlayer {
         fade(to: volume, over: 1.5, then: nil)
     }
 
-    // Da macOS 27 le API segnalano gli errori; prima si usano quelle precedenti (l'app parte da macOS 12).
+    // From macOS 27 the APIs report errors; earlier versions use the older ones (the app supports macOS 12+).
     private func connectPlayer(format: AVAudioFormat) -> Bool {
         if #available(macOS 27.0, *) {
             return (try? engine.connectNode(player, to: engine.mainMixerNode, format: format)) != nil
@@ -178,7 +178,7 @@ final class AmbientPlayer {
             completion(cached.buffer)
             return
         }
-        // Decodifica fuori dal thread principale: l'interfaccia non si blocca.
+        // Decode off the main thread: the interface does not freeze.
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let buffer = AmbientPlayer.decodeLoop(url)
             DispatchQueue.main.async {
@@ -197,15 +197,15 @@ final class AmbientPlayer {
         _ = startPlayer()
     }
 
-    // MARK: - Preparazione del loop
+    // MARK: - Loop preparation
 
     private static let maxSeconds = 60.0
     private static let crossfadeSeconds = 1.5
-    private static let targetRMS: Float = 0.0398   // circa -28 dBFS
+    private static let targetRMS: Float = 0.0398   // about -28 dBFS
 
-    /// Legge al massimo ~60 s del file, livella il volume e unisce fine e inizio con una dissolvenza.
-    /// I suoni con i bordi silenziosi (es. ticchettio) restano intatti: il loop è già pulito
-    /// e una dissolvenza ne sovrapporrebbe il ritmo.
+    /// Reads at most ~60 s of the file, levels the volume and joins end and start with a crossfade.
+    /// Sounds with silent edges (e.g. ticking) are left intact: the loop is already clean
+    /// and a crossfade would overlap their rhythm.
     static func decodeLoop(_ url: URL) -> AVAudioPCMBuffer? {
         guard let file = try? AVAudioFile(forReading: url) else { return nil }
         let format = file.processingFormat
@@ -220,7 +220,7 @@ final class AmbientPlayer {
         let n = Int(input.frameLength)
         guard n > 0 else { return nil }
 
-        // Livello: RMS e picco su tutti i canali
+        // Level: RMS and peak across all channels
         var sumSquares: Double = 0
         var peak: Float = 0
         for ch in 0..<channels {
@@ -235,7 +235,7 @@ final class AmbientPlayer {
         var gain = targetRMS / max(rms, 0.000_001)
         if peak > 0 { gain = min(gain, 0.95 / peak) }
 
-        // Bordi silenziosi? (sotto -60 dB nei primi e negli ultimi 50 ms)
+        // Silent edges? (below -60 dB in the first and last 50 ms)
         let edge = max(1, min(n / 4, Int(sampleRate * 0.05)))
         func edgeRMS(from start: Int) -> Float {
             var sum: Float = 0
@@ -256,7 +256,7 @@ final class AmbientPlayer {
             for i in 0..<length {
                 var v = s[i]
                 if i < fade {
-                    // Dissolvenza a potenza costante: l'inizio entra mentre la coda (gli ultimi secondi) esce.
+                    // Equal-power crossfade: the start fades in while the tail (the last seconds) fades out.
                     let t = Float(i) / Float(fade) * Float.pi / 2
                     v = s[i] * sin(t) + s[n - fade + i] * cos(t)
                 }
@@ -266,7 +266,7 @@ final class AmbientPlayer {
         return output
     }
 
-    // MARK: - Dissolvenze
+    // MARK: - Fades
 
     private func fade(to target: Float, over seconds: TimeInterval, then completion: (() -> Void)?) {
         fadeTimer?.invalidate()

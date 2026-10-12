@@ -1,9 +1,9 @@
 import Foundation
 import UserNotifications
 
-/// Promemoria delle scadenze dei todo.
-/// Le notifiche sono programmate in macOS: arrivano all'ora giusta anche con WorkHub chiusa.
-/// A ogni salvataggio dei todo si riprogrammano tutte (scadenze nuove, cambiate, rimosse, completate).
+/// Reminders for todo due dates.
+/// Notifications are scheduled in macOS: they arrive on time even when WorkHub is closed.
+/// Every time the todos are saved, they are all rescheduled (new, changed, removed, completed due dates).
 enum TodoReminders {
     private static let prefix = "todo|"
     private static var generation = 0
@@ -20,7 +20,7 @@ enum TodoReminders {
         center.getPendingNotificationRequests { pending in
             let old = pending.map { $0.identifier }.filter { $0.hasPrefix(prefix) }
             DispatchQueue.main.async {
-                guard token == generation else { return }   // nel frattempo è arrivato un salvataggio più recente
+                guard token == generation else { return }   // a newer save arrived in the meantime
                 center.removePendingNotificationRequests(withIdentifiers: old)
                 var completed: [String] = []
                 let now = Date()
@@ -42,20 +42,20 @@ enum TodoReminders {
                         content.body = "Due now"
                     }
                     content.sound = .default
-                    content.categoryIdentifier = "todo"   // pulsanti "Mark as done" e "Remind me in 1 hour"
+                    content.categoryIdentifier = "todo"   // "Mark as done" and "Remind me in 1 hour" buttons
                     content.userInfo = ["service": "todos", "jsId": id]
                     let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: due)
                     let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
                     center.add(UNNotificationRequest(identifier: prefix + id, content: content, trigger: trigger),
                                withCompletionHandler: nil)
                 }
-                // I todo completati spariscono anche dal Centro notifiche
+                // Completed todos also disappear from Notification Center
                 center.removeDeliveredNotifications(withIdentifiers: completed)
             }
         }
     }
 
-    /// Todo aperti con scadenza passata (badge sull'icona Todos).
+    /// Open todos past their due date (badge on the Todos icon).
     static func overdueCount(in json: String) -> Int {
         guard let todos = parse(json)?["todos"] as? [[String: Any]] else { return 0 }
         let nowMs = Date().timeIntervalSince1970 * 1000

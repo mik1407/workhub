@@ -1,10 +1,10 @@
 import Foundation
 
-/// Script iniettati nelle pagine.
-/// - notificationShim gira nel mondo della pagina: sostituisce window.Notification
-///   (WKWebView non la implementa) e inoltra le notifiche con un evento DOM.
-/// - notificationBridge e badge girano in un mondo isolato: solo loro vedono
-///   window.webkit.messageHandlers, la pagina no.
+/// Scripts injected into pages.
+/// - notificationShim runs in the page world: it replaces window.Notification
+///   (WKWebView doesn't implement it) and forwards notifications via a DOM event.
+/// - notificationBridge and badge run in an isolated world: only they can see
+///   window.webkit.messageHandlers, the page cannot.
 enum Scripts {
 
     static let notificationShim = #"""
@@ -144,7 +144,7 @@ enum Scripts {
         return badgeTemplate.replacingOccurrences(of: "__MODE__", with: name)
     }
 
-    /// Restituisce (come JSON) gli URL delle icone della pagina, dal migliore al peggiore.
+    /// Returns (as JSON) the page's icon URLs, from best to worst.
     static let faviconCandidates = #"""
     (() => {
       const selector = 'link[rel~="icon"], link[rel~="apple-touch-icon"], link[rel~="apple-touch-icon-precomposed"]';

@@ -1,9 +1,9 @@
 import Cocoa
 import UniformTypeIdentifiers
 
-/// Finestra Impostazioni: messaggi dalla pagina, salvataggio, icone dei servizi.
+/// Settings window: messages from the page, saving, service icons.
 extension AppController {
-    // MARK: - Impostazioni
+    // MARK: - Settings
 
     @objc func openSettings(_ sender: Any?) {
         if settingsWindow == nil {
@@ -23,7 +23,7 @@ extension AppController {
             guard let json = message["settings"] as? String, let data = json.data(using: .utf8),
                   let incoming = try? JSONDecoder().decode(AppSettings.self, from: data) else { return }
             applySettings(incoming)
-            if store.settings != incoming { pushSettings() }   // valori corretti: la pagina si riallinea
+            if store.settings != incoming { pushSettings() }   // values were corrected: the page resyncs
         case "resetData"?:
             if let id = id { services.first(where: { $0.config.id == id })?.resetData() }
         case "changeIcon"?:
@@ -67,7 +67,7 @@ extension AppController {
         services.first(where: { $0.config.id == id })?.tile?.image = IconStore.load(id: id)
     }
 
-    /// Stato per la pagina Impostazioni: impostazioni, catalogo, icone attuali.
+    /// State for the Settings page: settings, catalog, current icons.
     func pushSettings() {
         guard let settingsWindow = settingsWindow else { return }
         var icons: [String: String] = [:]

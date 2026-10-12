@@ -1,13 +1,13 @@
 import Cocoa
 import UserNotifications
 
-/// Notifiche native macOS. Il click riporta al servizio e al contenuto che l'ha generata.
+/// Native macOS notifications. A click brings you back to the service and the content that triggered it.
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
     static let shared = Notifier()
 
-    /// (serviceId, id della notifica JS) — impostato da AppController.
+    /// (serviceId, JS notification id) — set by AppController.
     var onClick: ((String, String?) -> Void)?
-    /// (identificativo del pulsante, serviceId, id) — pulsanti della notifica, es. "todo.done".
+    /// (button identifier, serviceId, id) — notification buttons, e.g. "todo.done".
     var onAction: ((String, String, String?) -> Void)?
 
     func setup() {
@@ -43,8 +43,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
     }
 
-    // Mostra il banner anche con l'app in primo piano (il filtro "lo stai già guardando"
-    // è applicato prima, in ServiceController).
+    // Shows the banner even when the app is in the foreground (the "you're already looking at it"
+    // filter is applied earlier, in ServiceController).
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {

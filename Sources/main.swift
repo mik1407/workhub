@@ -5,12 +5,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var activity: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if AppMover.offerIfNeeded() { return }   // si sta riaprendo da /Applications
-        // Evita che App Nap rallenti l'app quando è in background (notifiche in ritardo).
+        if AppMover.offerIfNeeded() { return }   // relaunching from /Applications
+        // Keeps App Nap from slowing the app in the background (late notifications).
         activity = ProcessInfo.processInfo.beginActivity(options: .userInitiatedAllowingIdleSystemSleep,
                                                          reason: "Messaging services running")
         Notifier.shared.setup()
-        Theme.apply(SettingsStore.shared.settings.appearance)   // prima di creare finestra e pannelli
+        Theme.apply(SettingsStore.shared.settings.appearance)   // before creating the window and panels
         let controller = AppController()
         controller.buildMenu()
         controller.start()
@@ -18,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    // Click sull'icona nel Dock con la finestra chiusa → la riapre.
+    // Clicking the Dock icon with the window closed → reopens it.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { controller?.showWindow() }
         return true

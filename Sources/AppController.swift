@@ -7,19 +7,19 @@ final class AppController: NSObject, NSWindowDelegate {
     let content = NSView()
     let rail = RightRail()
     let panelContainer = NSView()
-    static let cardRadius: CGFloat = 10   // angoli arrotondati di servizio e pannello
-    static let cardGap: CGFloat = 8       // margine sotto le card e spazio tra servizio e pannello
+    static let cardRadius: CGFloat = 10   // rounded corners of service and panel
+    static let cardGap: CGFloat = 8       // margin below the cards and gap between service and panel
     let todoPanel = TodoPanel()
     let todoButton = RailButton(image: RailIcons.doubleCheck(), tooltip: "Todos  ⌘T")
     let focusTimer = FocusTimer()
     let focusPanel = LocalPanel(page: "focus", handler: "focus")
     let focusButton = RailButton(image: RailIcons.stopwatch(), tooltip: "Focus  ⌘⇧F")
-    var contentTrailing: NSLayoutConstraint!   // 0 = servizio a tutta larghezza, -360 = lascia posto al pannello
-    var panelLeading: NSLayoutConstraint!      // -360 = pannello visibile, 0 = nascosto sotto la barra destra
+    var contentTrailing: NSLayoutConstraint!   // 0 = full-width service, -360 = leaves room for the panel
+    var panelLeading: NSLayoutConstraint!      // -360 = panel visible, 0 = hidden under the right rail
     var todoMenuItem: NSMenuItem?
     var focusMenuItem: NSMenuItem?
-    var openPanel: SidePanel?                  // pannello aperto a destra (uno alla volta)
-    var panelTransition = 0                    // invalida le animazioni superate da un nuovo click
+    var openPanel: SidePanel?                  // panel open on the right (one at a time)
+    var panelTransition = 0                    // invalidates animations superseded by a new click
 
     enum SidePanel: String { case todos, focus }
     private(set) var services: [ServiceController] = []
@@ -45,14 +45,14 @@ final class AppController: NSObject, NSWindowDelegate {
         setupServices()
         setupShortcuts()
         setupTodos()
-        // Tema "Automatic": segue il passaggio di macOS da chiaro a scuro e viceversa.
+        // "Automatic" theme: follows macOS switching from light to dark and back.
         appearanceObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
             DispatchQueue.main.async { self?.applyTheme() }
         }
     }
 
-    /// Tema chiaro o scuro (Impostazioni > Appearance) su cornice, barre, pannelli e Impostazioni.
-    /// I servizi non cambiano: seguono il tema di macOS, come in Safari.
+    /// Light or dark theme (Settings > Appearance) for the frame, bars, panels and Settings.
+    /// Services don't change: they follow the macOS theme, as in Safari.
     func applyTheme() {
         guard Theme.apply(store.settings.appearance) else { return }
         window.backgroundColor = Theme.sidebar
@@ -62,7 +62,7 @@ final class AppController: NSObject, NSWindowDelegate {
         todoPanel.panel.applyTheme()
         focusPanel.applyTheme()
         settingsWindow?.applyTheme()
-        focusChanged()   // colore dell'anello del Focus
+        focusChanged()   // Focus button ring color
     }
 
     // MARK: - Setup
@@ -70,9 +70,9 @@ final class AppController: NSObject, NSWindowDelegate {
     private func setupWindow() {
         window.title = "WorkHub"
         window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true   // la barra del titolo prende il colore della sidebar
+        window.titlebarAppearsTransparent = true   // the title bar takes the sidebar color
         window.backgroundColor = Theme.sidebar
-        window.isReleasedWhenClosed = false        // ⌘W nasconde, i servizi restano attivi
+        window.isReleasedWhenClosed = false        // ⌘W hides, services keep running
         window.minSize = NSSize(width: 900, height: 500)
         window.delegate = self
         window.center()
@@ -80,7 +80,7 @@ final class AppController: NSObject, NSWindowDelegate {
 
         let root = NSView()
         window.contentView = root
-        // Servizio e pannello Todos sono "card" con angoli arrotondati sulla cornice blu notte.
+        // Service and Todos panel are "cards" with rounded corners on the midnight-blue frame.
         for card in [content, panelContainer] {
             card.wantsLayer = true
             card.layer?.cornerRadius = Self.cardRadius
@@ -100,13 +100,13 @@ final class AppController: NSObject, NSWindowDelegate {
             ])
         }
 
-        // Ordine di sovrapposizione: servizio < pannello < barra destra
+        // Stacking order: service < panel < right rail
         for view in [sidebar, content, panelContainer, rail] as [NSView] {
             view.translatesAutoresizingMaskIntoConstraints = false
             root.addSubview(view)
         }
-        // sidebar | servizio | barra destra. Il pannello scorre sopra il servizio,
-        // così aprendo e chiudendo non si vede mai spazio vuoto.
+        // sidebar | service | right rail. The panel slides over the service,
+        // so opening and closing never shows empty space.
         contentTrailing = content.trailingAnchor.constraint(equalTo: rail.leadingAnchor)
         panelLeading = panelContainer.leadingAnchor.constraint(equalTo: rail.leadingAnchor)
         NSLayoutConstraint.activate([
@@ -167,8 +167,8 @@ final class AppController: NSObject, NSWindowDelegate {
         }
     }
 
-    /// ⌘1…⌘9 intercettati prima della pagina web (alcuni servizi usano gli stessi tasti),
-    /// per codice tasto fisico: funzionano con qualsiasi layout di tastiera.
+    /// ⌘1…⌘9 intercepted before the web page (some services use the same keys),
+    /// by physical key code: they work with any keyboard layout.
     private func setupShortcuts() {
         let numberKeys: [UInt16: Int] = [18: 0, 19: 1, 20: 2, 21: 3, 23: 4, 22: 5, 26: 6, 28: 7, 25: 8]
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -193,7 +193,7 @@ final class AppController: NSObject, NSWindowDelegate {
     }
 
     func start() {
-        services.forEach { $0.start() }   // tutti caricati subito: badge e notifiche anche in background
+        services.forEach { $0.start() }   // all loaded right away: badges and notifications in the background too
         let savedPanel = UserDefaults.standard.string(forKey: "openPanel").flatMap(SidePanel.init(rawValue:))
             ?? (UserDefaults.standard.bool(forKey: "todosOpen") ? .todos : nil)
         setPanel(savedPanel, animated: false, focus: false)
@@ -205,10 +205,10 @@ final class AppController: NSObject, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
-    // MARK: - Servizi (da Impostazioni)
+    // MARK: - Services (from Settings)
 
-    /// Allinea servizi, tessere della sidebar e menu Vai alla configurazione:
-    /// aggiunte, rimozioni, nuovo ordine, nomi e opzioni. Se cambiano URL o badge il servizio si ricarica.
+    /// Syncs services, sidebar tiles and the Go menu with the configuration:
+    /// additions, removals, new order, names and options. If the URL or badge changes, the service reloads.
     func applyServices(_ configs: [ServiceConfig], isLaunch: Bool) {
         let selectedId = current?.config.id
         var next: [ServiceController] = []
@@ -265,7 +265,7 @@ final class AppController: NSObject, NSWindowDelegate {
         return service
     }
 
-    /// Dopo "Esci e azzera dati": ricarica tutti i servizi dello stesso dominio.
+    /// After "Sign out and reset data": reloads all services on the same domain.
     func reloadServices(withBaseDomain domain: String) {
         for service in services where baseDomain(service.config.url.host) == domain { service.reloadHome() }
     }
@@ -274,9 +274,9 @@ final class AppController: NSObject, NSWindowDelegate {
         if settingsWindow?.isVisible == true { pushSettings() }
     }
 
-    // MARK: - Regole delle notifiche
+    // MARK: - Notification rules
 
-    /// true se la notifica di quel servizio va mostrata adesso.
+    /// true if that service's notification should be shown now.
     func shouldNotify(from service: ServiceController) -> Bool {
         guard service.config.notify else { return false }
         let rules = store.settings.notifications
@@ -288,7 +288,7 @@ final class AppController: NSObject, NSWindowDelegate {
 
     var hideNotificationContent: Bool { store.settings.notifications.hideContent }
 
-    // MARK: - Stato
+    // MARK: - State
 
     func select(_ index: Int) {
         guard services.indices.contains(index) else { return }
@@ -311,8 +311,8 @@ final class AppController: NSObject, NSWindowDelegate {
         select(index)
     }
 
-    /// Dopo un login ricarica i servizi dello stesso account rimasti fuori
-    /// (es. login in Gmail → entra anche Calendar, senza rifare l'accesso).
+    /// After a sign-in, reloads the services of the same account left signed out
+    /// (e.g. signing in to Gmail → Calendar signs in too, without logging in again).
     func refreshSiblings(of service: ServiceController) {
         let domain = baseDomain(service.config.url.host)
         for other in services where other !== service
@@ -327,7 +327,7 @@ final class AppController: NSObject, NSWindowDelegate {
         NSApp.dockTile.badgeLabel = total > 0 ? String(total) : nil
     }
 
-    /// true se l'utente sta guardando proprio quel servizio: in quel caso niente notifica.
+    /// true if the user is looking at that very service: in that case, no notification.
     func isUserLooking(at service: ServiceController) -> Bool {
         NSApp.isActive && window.isKeyWindow && !window.isMiniaturized && current === service
     }

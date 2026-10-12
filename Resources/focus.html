@@ -5,7 +5,7 @@
 <title>Focus</title>
 <style>
   :root {
-    --bg: #0a1120;            /* stesso blu della cornice */
+    --bg: #0a1120;            /* same blue as the frame */
     --surface: #111a2c;
     --surface-2: #1b2740;
     --text: #e8ecf3;
@@ -13,7 +13,7 @@
     --faint: #5d6a82;
     --accent: #2f9be9;
     --green: #3fca8e;
-    --phase: var(--accent);   /* colore della fase in corso */
+    --phase: var(--accent);   /* color of the current phase */
     --pad: 20px;
     color-scheme: dark;
   }
@@ -42,7 +42,7 @@
 
   .body { flex: 1; overflow-y: auto; padding: 0 var(--pad) 24px; }
 
-  /* Quadrante */
+  /* Dial */
   .dial { position: relative; width: 232px; height: 232px; margin: 26px auto 0; }
   .dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .dial .track { stroke: rgba(255, 255, 255, 0.06); }
@@ -61,7 +61,7 @@
   body[data-phase="focus"]:not(.paused) .label { color: var(--accent); }
   body[data-phase="break"]:not(.paused) .label, body[data-phase="longBreak"]:not(.paused) .label { color: var(--green); }
 
-  /* Comandi */
+  /* Controls */
   .controls { margin-top: 26px; }
   .primary {
     width: 100%;
@@ -89,11 +89,11 @@
   }
   .secondary button:hover { background: var(--surface-2); color: var(--text); }
 
-  /* Sessioni di oggi */
+  /* Today's sessions */
   .today { margin-top: 12px; color: var(--faint); font-size: 12px; text-align: center; }
   .today b { color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  /* Suono */
+  /* Sound */
   .sound { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.06); }
   .sound-head { display: flex; align-items: center; gap: 8px; }
   .sound-title { flex: 1; min-width: 0; }
@@ -177,7 +177,7 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
 
-  /* Tema chiaro (Impostazioni > Appearance): l'app imposta data-theme="light" sulla pagina */
+  /* Light theme (Settings > Appearance): the app sets data-theme="light" on the page */
   :root[data-theme="light"] {
     --bg: #ffffff;
     --surface: #f0f2f6;
@@ -261,11 +261,11 @@
   const $ = (id) => document.getElementById(id);
   const CIRCUMFERENCE = 2 * Math.PI * 104;
 
-  // Stato inviato dall'app (FocusTimer); questi sono solo i valori iniziali.
+  // State sent by the app (FocusTimer); these are just the initial values.
   let s = { phase: 'idle', paused: false, waiting: false, remaining: 1500, total: 1500, round: 0, today: 0,
             longBreakMinutes: 15, longBreakEvery: 0,
             soundOn: true, sound: '', sounds: [], audible: false, volume: 0.5, focusMinutes: 25, breakMinutes: 5 };
-  let soundKey = null;   // ricostruisce le tessere solo se l'elenco dei suoni cambia
+  let soundKey = null;   // rebuilds the chips only if the list of sounds changes
   let draggingVolume = false;
 
   const send = (action, value) => {
@@ -288,7 +288,7 @@
     const progress = running ? 1 - s.remaining / Math.max(1, s.total) : 0;
     $('arc').style.strokeDashoffset = String(CIRCUMFERENCE * (1 - Math.min(Math.max(progress, 0), 1)));
 
-    // Il sottotitolo dice anche cosa viene dopo (sostituisce la riga del ciclo)
+    // The subtitle also says what comes next (replaces the cycle line)
     const longNext = s.longBreakEvery > 0 && s.round > 0 && s.round % s.longBreakEvery === 0;
     const nextBreak = longNext ? `${s.longBreakMinutes} min long break` : `${s.breakMinutes} min break`;
     const longNote = s.longBreakEvery > 0 ? `, ${s.longBreakMinutes} min long break every ${s.longBreakEvery}` : ', on repeat';
@@ -364,7 +364,7 @@
     }
   }
 
-  // Chiamato dall'app a ogni aggiornamento del timer
+  // Called by the app on every timer update
   window.focusUpdate = (state) => { s = Object.assign(s, state); render(); };
 
   $('primary').addEventListener('click', () => send(s.phase === 'idle' ? 'start' : 'pause'));
@@ -387,7 +387,7 @@
   });
   volume.addEventListener('change', () => { draggingVolume = false; });
 
-  // Spazio = avvia / pausa
+  // Space = start / pause
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && (e.target === document.body || e.target === document.documentElement)) {
       e.preventDefault();
@@ -395,7 +395,7 @@
     }
   });
 
-  // File trascinati da fuori: ignorati
+  // Files dragged in from outside: ignored
   document.addEventListener('dragover', (e) => e.preventDefault());
   document.addEventListener('drop', (e) => e.preventDefault());
 

@@ -1,9 +1,9 @@
 import Cocoa
 import WebKit
 
-/// Pannelli a destra (Todos, Focus): apertura, chiusura e animazioni.
+/// Right-side panels (Todos, Focus): opening, closing and animations.
 extension AppController {
-    // MARK: - Pannelli a destra (Todos, Focus)
+    // MARK: - Right-side panels (Todos, Focus)
 
     @objc func toggleTodos(_ sender: Any?) {
         showWindow()
@@ -15,7 +15,7 @@ extension AppController {
         setPanel(openPanel == .focus ? nil : .focus, animated: true, focus: true)
     }
 
-    /// Apre un pannello (o lo cambia se ne è già aperto un altro) oppure chiude con nil.
+    /// Opens a panel (or switches to it if another one is already open), or closes with nil.
     func setPanel(_ target: SidePanel?, animated: Bool, focus: Bool) {
         openPanel = target
         todoButton.isActive = target == .todos
@@ -24,7 +24,7 @@ extension AppController {
         focusMenuItem?.state = target == .focus ? .on : .off
         UserDefaults.standard.set(target?.rawValue ?? "", forKey: "openPanel")
         if let target = target {
-            // Cambia contenuto; in chiusura resta visibile quello attuale mentre scorre via.
+            // Switch content; when closing, the current one stays visible as it slides away.
             todoPanel.webView.isHidden = target != .todos
             focusPanel.webView.isHidden = target != .focus
             if target == .focus { focusPanel.run("window.focusUpdate && window.focusUpdate(\(focusTimer.stateJSON))") }
@@ -43,8 +43,8 @@ extension AppController {
         }
 
         if let target = target {
-            // 1. il pannello entra scorrendo sopra il servizio (se è già aperto, cambia solo contenuto)
-            // 2. poi il servizio si restringe dietro il pannello (il ridisegno resta coperto)
+            // 1. the panel slides in over the service (if it's already open, only the content changes)
+            // 2. then the service shrinks behind the panel (the redraw stays hidden)
             panel.isHidden = false
             slidePanel(to: -width) { [weak self] in
                 guard let self = self, self.panelTransition == token else { return }
@@ -60,8 +60,8 @@ extension AppController {
                 }
             }
         } else {
-            // 1. il servizio si allarga dietro il pannello
-            // 2. quando la pagina ha ridisegnato alla nuova larghezza, il pannello esce scorrendo
+            // 1. the service widens behind the panel
+            // 2. once the page has redrawn at the new width, the panel slides out
             contentTrailing.constant = 0
             window.contentView?.layoutSubtreeIfNeeded()
             afterRepaint(of: current?.webView) { [weak self] in
@@ -87,8 +87,8 @@ extension AppController {
         }, completionHandler: completion)
     }
 
-    /// Esegue `action` quando la pagina ha disegnato almeno due frame alla nuova dimensione
-    /// (con un limite di sicurezza di 0,4 s se la pagina non risponde).
+    /// Runs `action` once the page has drawn at least two frames at the new size
+    /// (with a 0.4 s safety limit if the page doesn't respond).
     private func afterRepaint(of webView: WKWebView?, _ action: @escaping () -> Void) {
         var done = false
         let finish = {

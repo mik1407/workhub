@@ -1,0 +1,27 @@
+WorkHub: Gmail, Slack, Calendar, Claude, ChatGPT and WhatsApp in a single window.
+Requires macOS 12 or later.
+
+INSTALLATION
+1. Drag WorkHub onto the Applications folder next to it.
+2. Open WorkHub from the Applications folder.
+
+IF MACOS WON'T OPEN IT ("the developer cannot be verified")
+This is normal: the app isn't distributed through Apple, so macOS asks for confirmation the first time.
+
+macOS 15 (Sequoia) or later:
+  1. Try to open it, then close the warning.
+  2. Open System Settings > Privacy & Security.
+  3. Near the bottom you'll see "WorkHub was blocked": click "Open Anyway" and confirm with your password.
+
+macOS 14 or earlier:
+  Right-click WorkHub in Applications > Open > Open.
+
+Alternatively, from Terminal:
+  xattr -dr com.apple.quarantine /Applications/WorkHub.app
+
+FIRST LAUNCH
+- Allow notifications when asked.
+- Sign in to the services with your accounts: they are saved only on your Mac.
+- WhatsApp: scan the QR code with your phone.
+- Shortcuts: Cmd+1...6 for the services, Cmd+T for Todos, Cmd+Shift+F for Focus.
+- Focus sounds: add your own audio files from "Add sounds…" in the Focus panel.

@@ -1,7 +1,7 @@
 import Cocoa
 
-/// Colori dell'app, in versione scura e chiara (Impostazioni > Appearance).
-/// Le viste li leggono a ogni disegno: dopo un cambio di tema basta ridisegnarle (vedi refresh).
+/// App colors, in dark and light versions (Settings > Appearance).
+/// Views read them on every draw: after a theme change, redrawing is enough (see refresh).
 enum Theme {
     static private(set) var isLight = false
 
@@ -9,20 +9,20 @@ enum Theme {
         NSColor(srgbRed: r, green: g, blue: b, alpha: a)
     }
     private static func pick(_ dark: NSColor, _ light: NSColor) -> NSColor { isLight ? light : dark }
-    private static func ink(_ alpha: CGFloat) -> NSColor {   // bianco sul tema scuro, blu notte sul chiaro
+    private static func ink(_ alpha: CGFloat) -> NSColor {   // white on the dark theme, midnight blue on the light one
         pick(rgb(1, 1, 1, alpha), rgb(0.106, 0.137, 0.200, alpha))
     }
 
-    static var sidebar: NSColor      { pick(rgb(0.039, 0.067, 0.125), rgb(0.914, 0.929, 0.953)) } // cornice
+    static var sidebar: NSColor      { pick(rgb(0.039, 0.067, 0.125), rgb(0.914, 0.929, 0.953)) } // frame
     static var tile: NSColor         { pick(rgb(0.125, 0.129, 0.141), rgb(0.863, 0.882, 0.914)) }
     static var tileHover: NSColor    { pick(rgb(0.165, 0.169, 0.180), rgb(0.824, 0.847, 0.882)) }
     static var tileSelected: NSColor { pick(rgb(0.180, 0.184, 0.196), rgb(0.973, 0.976, 0.984)) }
-    static var accent: NSColor       { rgb(0.898, 0.440, 0.227) }                                 // indicatore attivo
+    static var accent: NSColor       { rgb(0.898, 0.440, 0.227) }                                 // active indicator
     static var badge: NSColor        { rgb(1.000, 0.231, 0.188) }
-    static var content: NSColor      { pick(rgb(0.039, 0.067, 0.125), rgb(1, 1, 1)) }             // sfondo delle card
-    static var todoAccent: NSColor   { pick(rgb(0.184, 0.608, 0.914), rgb(0.102, 0.498, 0.816)) } // blu dei pannelli
+    static var content: NSColor      { pick(rgb(0.039, 0.067, 0.125), rgb(1, 1, 1)) }             // card background
+    static var todoAccent: NSColor   { pick(rgb(0.184, 0.608, 0.914), rgb(0.102, 0.498, 0.816)) } // panel blue
     static var railActive: NSColor   { pick(rgb(0.145, 0.192, 0.267), rgb(0.831, 0.894, 0.965)) }
-    static var breakGreen: NSColor   { pick(rgb(0.247, 0.792, 0.557), rgb(0.071, 0.576, 0.373)) } // pausa del Focus
+    static var breakGreen: NSColor   { pick(rgb(0.247, 0.792, 0.557), rgb(0.071, 0.576, 0.373)) } // Focus break
     static var railIcon: NSColor     { ink(0.55) }
     static var railIconHover: NSColor { ink(0.85) }
     static var hoverFill: NSColor    { ink(0.06) }
@@ -30,7 +30,7 @@ enum Theme {
     static var tileLetter: NSColor   { ink(isLight ? 0.75 : 0.85) }
     static var tileRing: NSColor     { ink(isLight ? 0.22 : 0.28) }
 
-    /// Applica il tema scelto ("Automatic" segue macOS). Restituisce true se è cambiato.
+    /// Applies the chosen theme ("Automatic" follows macOS). Returns true if it changed.
     @discardableResult
     static func apply(_ mode: AppearanceMode) -> Bool {
         let light: Bool
@@ -44,7 +44,7 @@ enum Theme {
         return true
     }
 
-    /// Ridisegna una vista e quelle che contiene, dopo un cambio di tema.
+    /// Redraws a view and the views it contains, after a theme change.
     static func refresh(_ view: NSView) {
         view.needsDisplay = true
         (view as? RailButton)?.updateTint()
@@ -52,12 +52,12 @@ enum Theme {
     }
 }
 
-/// Un'icona della sidebar: riquadro arrotondato, icona del servizio, badge rosso.
+/// A sidebar icon: rounded tile, service icon, red badge.
 final class ServiceTile: NSView {
-    static let side: CGFloat = 52   // lato del riquadro
-    static let pad: CGFloat = 7     // margine per il badge che sborda e per il bagliore
+    static let side: CGFloat = 52   // tile side length
+    static let pad: CGFloat = 7     // margin for the overhanging badge and the glow
 
-    /// Icona originale del servizio; viene normalizzata in una tessera piena (vedi IconStyle).
+    /// Original service icon; it is normalized into a full tile (see IconStyle).
     var image: NSImage? {
         didSet {
             rendered = image.map(IconStyle.normalize)
@@ -86,14 +86,14 @@ final class ServiceTile: NSView {
     override func mouseExited(with event: NSEvent) { hovering = false }
     override func mouseDown(with event: NSEvent) { onClick?() }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
-    // Manina al passaggio del mouse: si capisce che è cliccabile.
+    // Pointing hand on hover: shows that it is clickable.
     override func cursorUpdate(with event: NSEvent) { NSCursor.pointingHand.set() }
 
     override func draw(_ dirtyRect: NSRect) {
         let tileRect = NSRect(x: Self.pad, y: Self.pad, width: Self.side, height: Self.side)
         let tilePath = NSBezierPath(roundedRect: tileRect, xRadius: 14, yRadius: 14)
 
-        // Riquadro (con bagliore se selezionato)
+        // Tile (with glow when selected)
         NSGraphicsContext.saveGraphicsState()
         if isSelected {
             let glow = NSShadow()
@@ -106,7 +106,7 @@ final class ServiceTile: NSView {
         tilePath.fill()
         NSGraphicsContext.restoreGraphicsState()
 
-        // Icona o iniziale
+        // Icon or initial
         NSGraphicsContext.saveGraphicsState()
         tilePath.addClip()
         if let rendered = rendered {
@@ -125,7 +125,7 @@ final class ServiceTile: NSView {
         }
         NSGraphicsContext.restoreGraphicsState()
 
-        // Al passaggio del mouse: anello sottile (lo sfondo della tessera ora è coperto dall'icona)
+        // On hover: thin ring (the tile background is now covered by the icon)
         if hovering && !isSelected {
             Theme.tileRing.setStroke()
             let ring = NSBezierPath(roundedRect: tileRect.insetBy(dx: -2.5, dy: -2.5), xRadius: 16.5, yRadius: 16.5)
@@ -133,7 +133,7 @@ final class ServiceTile: NSView {
             ring.stroke()
         }
 
-        // Badge: numero, oppure pallino per "non letti senza menzioni"
+        // Badge: a number, or a dot for "unread without mentions"
         guard badgeCount > 0 || badgeDot else { return }
         let text: String? = badgeCount > 0 ? (badgeCount > 99 ? "99+" : String(badgeCount)) : nil
         let attrs: [NSAttributedString.Key: Any] = [
@@ -144,7 +144,7 @@ final class ServiceTile: NSView {
         let h: CGFloat = 20
         let w = max(h, textSize.width + 10)
         let r = NSRect(x: tileRect.maxX - w + 5, y: tileRect.minY - 5, width: w, height: h)
-        Theme.sidebar.setFill()   // anello che stacca il badge dal riquadro
+        Theme.sidebar.setFill()   // ring that separates the badge from the tile
         NSBezierPath(roundedRect: r.insetBy(dx: -2, dy: -2), xRadius: h / 2 + 2, yRadius: h / 2 + 2).fill()
         Theme.badge.setFill()
         NSBezierPath(roundedRect: r, xRadius: h / 2, yRadius: h / 2).fill()
@@ -158,16 +158,16 @@ final class ServiceTile: NSView {
     }
 }
 
-/// Colonna verticale con le icone e l'indicatore del servizio attivo sul bordo sinistro.
+/// Vertical column with the icons and the active-service indicator on the left edge.
 final class SidebarView: NSView {
     static let width: CGFloat = 80
     private(set) var tiles: [ServiceTile] = []
-    private var footerButton: RailButton?   // in fondo: Impostazioni
+    private var footerButton: RailButton?   // at the bottom: Settings
 
-    // Le icone scorrono quando non stanno tutte in altezza; la rotella resta fissa in fondo.
+    // The icons scroll when they don't all fit vertically; the gear stays fixed at the bottom.
     private let scrollView = NSScrollView()
     private let tileList = SidebarTileList()
-    private var revealPending = false   // dopo il prossimo layout, scorre fino all'icona selezionata
+    private var revealPending = false   // after the next layout, scroll to the selected icon
 
     var selectedIndex = 0 {
         didSet {
@@ -181,7 +181,7 @@ final class SidebarView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         scrollView.drawsBackground = false
-        scrollView.hasVerticalScroller = false   // si scorre con trackpad o rotella
+        scrollView.hasVerticalScroller = false   // scroll with the trackpad or mouse wheel
         scrollView.verticalScrollElasticity = .none
         scrollView.horizontalScrollElasticity = .none
         scrollView.documentView = tileList
@@ -238,7 +238,7 @@ final class SidebarView: NSView {
     }
 }
 
-/// Contenuto scorrevole della sidebar: le icone e l'indicatore del servizio attivo, che scorre con loro.
+/// Scrollable sidebar content: the icons and the active-service indicator, which scrolls with them.
 private final class SidebarTileList: NSView {
     weak var selected: NSView? { didSet { needsDisplay = true } }
 

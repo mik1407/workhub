@@ -1,11 +1,11 @@
 import Cocoa
 
-/// Se WorkHub viene aperta fuori da Applicazioni (dal DMG, da Download, dalla cartella di build),
-/// propone di spostarla in /Applications e si riapre da lì, come fanno le app scaricate.
+/// If WorkHub is opened outside Applications (from the DMG, Downloads, the build folder),
+/// offers to move it to /Applications and relaunches from there, as downloaded apps do.
 enum AppMover {
     private static let skipKey = "skipMoveToApplications"
 
-    /// Restituisce true se l'app si sta riavviando da /Applications (in quel caso non va inizializzata).
+    /// Returns true if the app is relaunching from /Applications (in that case, don't initialize it).
     static func offerIfNeeded() -> Bool {
         let current = Bundle.main.bundleURL.resolvingSymlinksInPath()
         let path = current.path
@@ -29,7 +29,7 @@ enum AppMover {
         let destination = URL(fileURLWithPath: "/Applications").appendingPathComponent(current.lastPathComponent)
         do {
             if fileManager.fileExists(atPath: destination.path) {
-                try fileManager.trashItem(at: destination, resultingItemURL: nil)   // versione precedente nel Cestino
+                try fileManager.trashItem(at: destination, resultingItemURL: nil)   // previous version to the Trash
             }
             try fileManager.copyItem(at: current, to: destination)
         } catch {
@@ -40,14 +40,14 @@ enum AppMover {
             return false
         }
 
-        // Riapre la copia in Applicazioni appena questa istanza si è chiusa.
+        // Reopens the copy in Applications as soon as this instance has quit.
         let pid = ProcessInfo.processInfo.processIdentifier
         let relaunch = Process()
         relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
         relaunch.arguments = ["-c", "while kill -0 \(pid) 2>/dev/null; do sleep 0.2; done; open \"$0\"", destination.path]
         try? relaunch.run()
 
-        // La vecchia copia va nel Cestino (dal DMG non si può: è in sola lettura, e va bene così).
+        // The old copy goes to the Trash (not possible from the DMG: it's read-only, and that's fine).
         try? fileManager.trashItem(at: current, resultingItemURL: nil)
         NSApp.terminate(nil)
         return true
