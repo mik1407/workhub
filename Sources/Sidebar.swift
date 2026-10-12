@@ -71,6 +71,7 @@ final class ServiceTile: NSView {
     var badgeCount = 0 { didSet { if oldValue != badgeCount { needsDisplay = true } } }
     var badgeDot = false { didSet { if oldValue != badgeDot { needsDisplay = true } } }
     var onClick: (() -> Void)?
+    var onReload: (() -> Void)?     // "Reload" in the right-click menu
     private var hovering = false { didSet { needsDisplay = true } }
 
     override var isFlipped: Bool { true }
@@ -89,6 +90,15 @@ final class ServiceTile: NSView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     // Pointing hand on hover: shows that it is clickable.
     override func cursorUpdate(with event: NSEvent) { NSCursor.pointingHand.set() }
+
+    // Right-click (or Control-click): menu with the actions on this service.
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Reload", action: #selector(reloadFromMenu), keyEquivalent: "").target = self
+        return menu
+    }
+
+    @objc private func reloadFromMenu() { onReload?() }
 
     override func draw(_ dirtyRect: NSRect) {
         let tileRect = NSRect(x: Self.pad, y: Self.pad, width: Self.side, height: Self.side)

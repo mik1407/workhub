@@ -47,6 +47,7 @@ Sign-ins are kept between launches.
 | Open/close the Todos panel | ⌘T (or the icon in the right bar) |
 | Open/close the Focus panel | ⌘⇧F (or the stopwatch in the right bar) |
 | Reload service / all | ⌘R / ⌘⇧R |
+| Reload any service, even one not on screen | right-click its icon > Reload |
 | Go back to the service's home page | ⌘⇧H |
 | Back / Forward | ⌘[ / ⌘] |
 | Hide window (services stay active) | ⌘W |

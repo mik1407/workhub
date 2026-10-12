@@ -272,6 +272,7 @@ final class AppController: NSObject, NSWindowDelegate {
                   let index = self.services.firstIndex(where: { $0 === service }) else { return }
             self.select(index)
         }
+        tile.onReload = { [weak service] in service?.reload() }
         service.tile = tile
         return service
     }

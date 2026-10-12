@@ -224,6 +224,11 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         reloadHome()
     }
 
+    /// Reloads the current page; a service that never loaded (blank) loads its home page instead.
+    func reload() {
+        if webView.url == nil { reloadHome() } else { _ = webView.reload() }
+    }
+
     func reloadHome() {
         _ = webView.load(URLRequest(url: config.url))
     }
