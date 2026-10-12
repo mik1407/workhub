@@ -13,6 +13,12 @@ any other website you use. It also has a to-do list and a focus timer built in.
 
 Works on any Mac with macOS 12 (Monterey) or later.
 
+**Is it safe?** WorkHub shows the same websites you already use, with the same engine as Safari. It has no
+server, sends nothing anywhere and has no account of its own. Its code is public, right here on GitHub.
+
+**Keyboard symbols used in this guide:** ⌘ is the Command key, ⇧ is Shift, and keys written together are pressed
+at the same time (for example ⌘⇧H = Command + Shift + H).
+
 ---
 
 ## Install it
@@ -20,13 +26,16 @@ Works on any Mac with macOS 12 (Monterey) or later.
 There are two ways. **Option 1** is for most people. Use **option 2** only if a colleague gives you the
 installer file.
 
-### Option 1: install with a few copy-and-paste commands (about 10 minutes)
+### Option 1: install with a few copy-and-paste commands (10–20 minutes, mostly waiting)
 
 You don't need to know anything about programming: you'll copy four commands into an app called Terminal.
 
 **Open Terminal.** Press ⌘ (Command) + Space, type `Terminal` and press Return. A window with text appears.
-For each step below: copy the command (there's a copy button on the right of each box on GitHub), paste it into
-Terminal with ⌘V, press Return and wait until it finishes.
+For each step below: copy the command (move the mouse over the grey box and click the copy button on its
+right), paste it into Terminal with ⌘V and press Return.
+
+**How to tell a step is finished:** Terminal shows a new line ending with `%` and a blinking cursor, ready for
+the next command. Until then, just wait. Text scrolling by is normal.
 
 **Step 1: install Apple's developer tools** (free, from Apple, needed once per Mac):
 
@@ -34,8 +43,9 @@ Terminal with ⌘V, press Return and wait until it finishes.
 xcode-select --install
 ```
 
-A window opens: click **Install**, then **Agree**. Wait until it says the software was installed
-(5–15 minutes). If Terminal says the tools are already installed, that's fine: go to step 2.
+A window opens with three buttons: click **Install** (not "Get Xcode"), then **Agree**. Wait until the window
+says the software was installed (5–15 minutes), then click **Done**. If Terminal instead says the tools are
+already installed, that's fine: go to step 2.
 
 **Step 2: download WorkHub:**
 
@@ -43,11 +53,18 @@ A window opens: click **Install**, then **Agree**. Wait until it says the softwa
 git clone https://github.com/mik1407/workhub.git ~/WorkHub
 ```
 
-**Step 3: prepare the signature** (once per Mac; it stops macOS from asking for permissions after every update):
+- If it says `command not found: git`, step 1 hasn't finished yet: wait for its window to say it's done, then
+  try again.
+- If it says `already exists`, WorkHub was already downloaded (for example on a second try): go to step 3.
+
+**Step 3: let your Mac recognise WorkHub** (once per Mac). This creates a private "signature" that stays on
+your Mac, so after each update macOS knows it's still the same WorkHub and doesn't ask for permissions again:
 
 ```bash
 cd ~/WorkHub && ./setup-signing.sh
 ```
+
+It's done when you see `Done: certificate "WorkHub Dev" created` (or `already present` if you did it before).
 
 **Step 4: build and install the app:**
 
@@ -82,8 +99,11 @@ yours: Apple menu (top left) > **About This Mac**, look at "Chip". If it doesn't
 ## First launch
 
 1. **Allow notifications** when macOS asks, otherwise you won't get any.
-2. **Sign in** to each app, as you would in a browser. Gmail and Google Calendar share the same Google sign-in,
-   so signing in once is enough. For **WhatsApp**, scan the QR code with your phone.
+2. **Sign in** to each app, as you would in a browser. WorkHub starts with Gmail, Slack, Google Calendar,
+   Claude, ChatGPT and WhatsApp. Gmail and Google Calendar share the same Google sign-in, so signing in once is
+   enough. For **WhatsApp**, scan the QR code with your phone.
+   Don't use one of them? Remove it: ⌘, (Settings) > **Services**, select it, click **Remove service** twice.
+   You can add others from the same page (**Add service**).
 3. **Turn on desktop notifications inside Gmail and Calendar**, which have them off by default:
    Gmail: Settings > General > Desktop notifications. Calendar: Settings > Notifications.
 4. Recommended:
@@ -159,7 +179,8 @@ Changes apply immediately.
 
 ## Update to the latest version
 
-Open Terminal (⌘ Space, type `Terminal`, Return), paste this and press Return:
+Updating uses Terminal again, with the same one-line command every time. Open Terminal (⌘ Space, type `Terminal`,
+Return), paste this and press Return:
 
 ```bash
 cd ~/WorkHub && git pull && ./build.sh install
@@ -187,6 +208,7 @@ WorkHub closes and reopens with the new version. Your sign-ins, settings and tod
 
 | Problem | What to do |
 |---|---|
+| I closed the window and it disappeared | Click the WorkHub icon in the Dock: the window comes back. Closing it (⌘W) only hides it. |
 | An app shows a blank page | Right-click its icon in the sidebar > **Reload**. WorkHub also retries on its own when the network comes back. |
 | No notifications at all | **System Settings > Notifications > WorkHub**: turn on Allow notifications. Also check that notifications aren't paused in WorkHub's Settings > Notifications. |
 | No notifications from Gmail or Calendar | Turn them on inside Gmail and Calendar (see [First launch](#first-launch), step 3). |
