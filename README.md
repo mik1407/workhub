@@ -13,6 +13,7 @@ From the project folder:
 ./build.sh install      # builds, installs to /Applications and launches
 ./build.sh dmg          # or: creates WorkHub-<version>.dmg to open and drag into Applications
 ./build.sh test         # runs the logic tests (Tests/ folder) without building the app
+swift Tools/make-icon.swift   # redraws the app icon into Resources/AppIcon.icns
 ```
 
 The build always targets macOS 12 or later, the same minimum version declared in `Info.plist`.
