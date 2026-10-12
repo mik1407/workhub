@@ -20,6 +20,7 @@ struct ServiceConfig: Codable, Equatable {
     var sound = true                // notification sound
     var allowDuringFocus = false    // notify even during focus (when silencing is on)
     var separateSession = false     // own cookies and sign-in, e.g. for a second account (macOS 14+)
+    var separatorAfter = false      // a separator line below its icon in the sidebar
 
     init(id: String, name: String, url: URL, badge: BadgeMode) {
         self.id = id
@@ -40,6 +41,7 @@ struct ServiceConfig: Codable, Equatable {
         sound = (try? c.decode(Bool.self, forKey: .sound)) ?? true
         allowDuringFocus = (try? c.decode(Bool.self, forKey: .allowDuringFocus)) ?? false
         separateSession = (try? c.decode(Bool.self, forKey: .separateSession)) ?? false
+        separatorAfter = (try? c.decode(Bool.self, forKey: .separatorAfter)) ?? false
     }
 }
 

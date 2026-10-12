@@ -26,6 +26,7 @@ enum Theme {
     static var railIcon: NSColor     { ink(0.55) }
     static var railIconHover: NSColor { ink(0.85) }
     static var hoverFill: NSColor    { ink(0.06) }
+    static var separator: NSColor    { ink(isLight ? 0.16 : 0.14) }
     static var progressTrack: NSColor { ink(isLight ? 0.10 : 0.08) }
     static var tileLetter: NSColor   { ink(isLight ? 0.75 : 0.85) }
     static var tileRing: NSColor     { ink(isLight ? 0.22 : 0.28) }
@@ -167,6 +168,7 @@ final class SidebarView: NSView {
     // The icons scroll when they don't all fit vertically; the gear stays fixed at the bottom.
     private let scrollView = NSScrollView()
     private let tileList = SidebarTileList()
+    private var separatorsAfter: Set<Int> = []
     private var revealPending = false   // after the next layout, scroll to the selected icon
 
     var selectedIndex = 0 {
@@ -192,9 +194,11 @@ final class SidebarView: NSView {
 
     override var isFlipped: Bool { true }
 
-    func setTiles(_ newTiles: [ServiceTile]) {
+    /// separatorsAfter: indexes of the tiles with a separator line below them.
+    func setTiles(_ newTiles: [ServiceTile], separatorsAfter: Set<Int> = []) {
         tiles.forEach { $0.removeFromSuperview() }
         tiles = newTiles
+        self.separatorsAfter = separatorsAfter
         tiles.forEach { tileList.addSubview($0) }
         tileList.selected = tiles.indices.contains(selectedIndex) ? tiles[selectedIndex] : nil
         needsLayout = true
@@ -218,10 +222,17 @@ final class SidebarView: NSView {
         scrollView.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(0, listBottom))
         let size = ServiceTile.side + ServiceTile.pad * 2
         var y: CGFloat = 6
-        for tile in tiles {
+        var separators: [CGFloat] = []
+        for (index, tile) in tiles.enumerated() {
             tile.frame = NSRect(x: (bounds.width - size) / 2, y: y, width: size, height: size)
             y += size + 4
+            // No line after the last icon: it would separate nothing.
+            if separatorsAfter.contains(index) && index < tiles.count - 1 {
+                separators.append(y + 3)
+                y += 10
+            }
         }
+        tileList.separators = separators
         tileList.frame = NSRect(x: 0, y: 0, width: bounds.width, height: max(y + 2, scrollView.frame.height))
         tileList.needsDisplay = true
         if revealPending, tiles.indices.contains(selectedIndex) {
@@ -241,10 +252,16 @@ final class SidebarView: NSView {
 /// Scrollable sidebar content: the icons and the active-service indicator, which scrolls with them.
 private final class SidebarTileList: NSView {
     weak var selected: NSView? { didSet { needsDisplay = true } }
+    var separators: [CGFloat] = [] { didSet { needsDisplay = true } }   // y of each separator line
 
     override var isFlipped: Bool { true }
 
     override func draw(_ dirtyRect: NSRect) {
+        Theme.separator.setFill()
+        for y in separators {
+            NSBezierPath(roundedRect: NSRect(x: bounds.midX - 18, y: y - 1, width: 36, height: 2),
+                         xRadius: 1, yRadius: 1).fill()
+        }
         guard let f = selected?.frame else { return }
         Theme.accent.setFill()
         NSBezierPath(roundedRect: NSRect(x: -3, y: f.midY - 18, width: 6, height: 36),

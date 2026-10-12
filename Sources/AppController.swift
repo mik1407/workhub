@@ -242,7 +242,8 @@ final class AppController: NSObject, NSWindowDelegate {
             service.tile?.toolTip = index < 9 ? "\(service.config.name)  ⌘\(index + 1)" : service.config.name
             service.tile?.needsDisplay = true
         }
-        sidebar.setTiles(services.compactMap { $0.tile })
+        sidebar.setTiles(services.compactMap { $0.tile },
+                         separatorsAfter: Set(services.indices.filter { services[$0].config.separatorAfter }))
         rebuildGoMenu()
         if !isLaunch {
             let index = selectedId.flatMap { id in services.firstIndex { $0.config.id == id } } ?? 0

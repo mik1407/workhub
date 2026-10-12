@@ -100,6 +100,8 @@
   }
   .svc:hover { background: var(--hover); }
   .svc.selected { background: var(--surface-2); }
+  .svc.sep-after { margin-bottom: 11px; }
+  .svc.sep-after::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -6px; height: 1px; background: var(--line); }
   .svc .grip { width: 8px; color: var(--faint); opacity: 0; flex: none; }
   .svc:hover .grip { opacity: 1; }
   .svc .meta { flex: 1; min-width: 0; }
@@ -414,7 +416,8 @@
     const list = $('svc-list');
     list.textContent = '';
     S.services.forEach((service, i) => {
-      const row = el('div', 'svc' + (service.id === selectedId ? ' selected' : ''));
+      const sep = service.separatorAfter && i < S.services.length - 1;
+      const row = el('div', 'svc' + (service.id === selectedId ? ' selected' : '') + (sep ? ' sep-after' : ''));
       row.dataset.id = service.id;
       const grip = el('span', 'grip');
       grip.innerHTML = '<svg viewBox="0 0 8 14" fill="currentColor"><circle cx="2" cy="2" r="1.2"/><circle cx="6" cy="2" r="1.2"/><circle cx="2" cy="7" r="1.2"/><circle cx="6" cy="7" r="1.2"/><circle cx="2" cy="12" r="1.2"/><circle cx="6" cy="12" r="1.2"/></svg>';
@@ -505,7 +508,16 @@
       : 'Requires macOS 14 or later.');
     sessionNote.style.marginTop = '0';
 
-    form.append(nameLabel, urlLabel, badgeLabel, dockRow, sessionRow, sessionNote);
+    const sepRow = el('div', 'inline');
+    sepRow.append(el('span', null, 'Separator below'));
+    const sepSwitch = el('button', 'switch');
+    sepSwitch.setAttribute('role', 'switch');
+    sepSwitch.setAttribute('aria-label', 'Separator below');
+    switchEl(sepSwitch, service.separatorAfter);
+    sepSwitch.addEventListener('click', () => { service.separatorAfter = !service.separatorAfter; save(); renderServices(); });
+    sepRow.append(sepSwitch);
+
+    form.append(nameLabel, urlLabel, badgeLabel, dockRow, sepRow, sessionRow, sessionNote);
 
     const zone = el('div', 'danger-zone');
     const signOut = armedButton('Sign out and reset data', 'Click again to sign out', () => send({ action: 'resetData', id: service.id }));
@@ -640,7 +652,7 @@
   });
 
   function addService(base) {
-    S.services.push({ countInDock: true, notify: true, sound: true, allowDuringFocus: false, separateSession: false, ...base });
+    S.services.push({ countInDock: true, notify: true, sound: true, allowDuringFocus: false, separateSession: false, separatorAfter: false, ...base });
     selectedId = base.id;
     $('sheet').hidden = true;
     tab = 'services';

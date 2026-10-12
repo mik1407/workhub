@@ -162,6 +162,8 @@ let sessions = settings("""
              {"id":"wa-2","name":"WhatsApp 2","url":"https://web.whatsapp.com/","separateSession":true}]}
 """)
 equal(sessions.services.map(\.separateSession), [false, true], "missing field -> shared sign-in")
+equal(settings(#"{"services":[{"id":"a","url":"https://a.example.com/","separatorAfter":true},{"id":"b","url":"https://b.example.com/"}]}"#)
+      .services.map(\.separatorAfter), [true, false], "separator read, missing -> none")
 
 print(failures == 0 ? "\nAll tests passed." : "\n\(failures) tests failed.")
 exit(failures == 0 ? 0 : 1)

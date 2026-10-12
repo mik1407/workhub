@@ -96,6 +96,8 @@ Pomodoro timer in the right bar: 25 minutes of focus, 5 of break, repeating unti
   The same service can be added more than once ("Add another" in the catalog). "Separate sign-in" gives a
   service its own cookies and sign-in, for a second account such as another WhatsApp number (macOS 14 or later);
   without it, all services share one browser session.
+  "Separator below" draws a line under the service's icon in the sidebar, to group services; it moves with
+  the service when you reorder, and the ⌘1–9 shortcuts keep counting services only.
 - **Notifications**: pause for 1 hour or until tomorrow, hidden content, notifications and sound per service,
   silence during focus with the exceptions you choose.
 - **Focus**: durations, a long break every N sessions, start the next phase automatically or wait for a click,
