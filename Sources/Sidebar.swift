@@ -228,8 +228,11 @@ final class SidebarView: NSView {
             y += size + 4
             // No line after the last icon: it would separate nothing.
             if separatorsAfter.contains(index) && index < tiles.count - 1 {
-                separators.append(y + 3)
-                y += 10
+                // Extra space around the line, which sits halfway between the two visible tiles
+                // (the upper one ends at y - 4 - pad, the lower one starts at y + extra + pad).
+                let extra: CGFloat = 26
+                separators.append(y + (extra - 4) / 2)
+                y += extra
             }
         }
         tileList.separators = separators
