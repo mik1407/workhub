@@ -1,124 +1,244 @@
 # WorkHub
 
-macOS container for Gmail, Slack, Google Calendar, Claude, ChatGPT and WhatsApp. Native Swift + WebKit app, no dependencies.
+All your work apps in one window on your Mac: Gmail, Google Calendar, Slack, WhatsApp, ChatGPT, Claude and
+any other website you use. It also has a to-do list and a focus timer built in.
 
-## Build and install
+- **One window, one place.** Each app has its icon in the sidebar on the left. Click an icon (or press ⌘1, ⌘2…)
+  to switch.
+- **Notifications and unread counts.** You get Mac notifications from every app, and red badges show
+  what's unread, even with the window closed.
+- **Todos.** A to-do list with due dates and reminders, always one click away.
+- **Focus.** A Pomodoro timer (25 minutes of work, 5 of break) with optional background sounds.
+- **Private.** WorkHub has no server and no account of its own. Your sign-ins, settings and todos stay on your Mac.
 
-Requirements: macOS 12 or later, Xcode Command Line Tools (`xcode-select --install`).
+Works on any Mac with macOS 12 (Monterey) or later.
 
-From the project folder:
+---
+
+## Install it
+
+There are two ways. **Option 1** is for most people. Use **option 2** only if a colleague gives you the
+installer file.
+
+### Option 1: install with a few copy-and-paste commands (about 10 minutes)
+
+You don't need to know anything about programming: you'll copy four commands into an app called Terminal.
+
+**Open Terminal.** Press ⌘ (Command) + Space, type `Terminal` and press Return. A window with text appears.
+For each step below: copy the command (there's a copy button on the right of each box on GitHub), paste it into
+Terminal with ⌘V, press Return and wait until it finishes.
+
+**Step 1: install Apple's developer tools** (free, from Apple, needed once per Mac):
 
 ```bash
-./setup-signing.sh      # once only: creates the "WorkHub Dev" certificate
-./build.sh install      # builds, installs to /Applications and launches
-./build.sh dmg          # or: creates WorkHub-<version>.dmg to open and drag into Applications
+xcode-select --install
+```
+
+A window opens: click **Install**, then **Agree**. Wait until it says the software was installed
+(5–15 minutes). If Terminal says the tools are already installed, that's fine: go to step 2.
+
+**Step 2: download WorkHub:**
+
+```bash
+git clone https://github.com/mik1407/workhub.git ~/WorkHub
+```
+
+**Step 3: prepare the signature** (once per Mac; it stops macOS from asking for permissions after every update):
+
+```bash
+cd ~/WorkHub && ./setup-signing.sh
+```
+
+**Step 4: build and install the app:**
+
+```bash
+cd ~/WorkHub && ./build.sh install
+```
+
+This takes a minute or two. When you see `Installed in /Applications and launched`, WorkHub opens.
+
+During this step macOS may ask: **"codesign wants to access key WorkHub Dev"**. Type your Mac password and
+click **Always Allow** (not just "Allow"), so it doesn't ask again.
+
+That's it. You can close Terminal. WorkHub is now in your Applications folder like any other app.
+
+### Option 2: from the installer file a colleague gave you
+
+1. Open the file `WorkHub-<version>.dmg`.
+2. Drag **WorkHub** onto the **Applications** folder next to it.
+3. Open WorkHub from Applications. The first time, macOS says it can't verify the developer
+   (WorkHub isn't distributed through the App Store). To allow it:
+   - macOS 15 or later: close the warning, open **System Settings > Privacy & Security**, scroll down to
+     "WorkHub was blocked" and click **Open Anyway**.
+   - macOS 14 or earlier: right-click WorkHub in Applications, choose **Open**, then **Open** again.
+4. The installer doesn't include the focus background sounds: add your own from the Focus panel
+   (**Add sounds…**).
+
+The installer file only works on the same kind of Mac as the one it was made on (Apple chip or Intel). To check
+yours: Apple menu (top left) > **About This Mac**, look at "Chip". If it doesn't open, use option 1 instead.
+
+---
+
+## First launch
+
+1. **Allow notifications** when macOS asks, otherwise you won't get any.
+2. **Sign in** to each app, as you would in a browser. Gmail and Google Calendar share the same Google sign-in,
+   so signing in once is enough. For **WhatsApp**, scan the QR code with your phone.
+3. **Turn on desktop notifications inside Gmail and Calendar**, which have them off by default:
+   Gmail: Settings > General > Desktop notifications. Calendar: Settings > Notifications.
+4. Recommended:
+   - Start WorkHub automatically: in the menu bar, **WorkHub > Open at Login**.
+   - Keep it in the Dock: right-click its icon in the Dock > **Options > Keep in Dock**.
+
+You stay signed in between launches. Closing the window (⌘W) only hides it: notifications keep arriving.
+To quit completely, press ⌘Q.
+
+---
+
+## Everyday use
+
+| To… | Do this |
+|---|---|
+| Switch app | Click its icon in the left sidebar, or press ⌘1, ⌘2, … ⌘9 |
+| Reload the app you're looking at | ⌘R (all apps: ⌘⇧R) |
+| Reload any app, even one not on screen | Right-click its icon in the sidebar > **Reload** |
+| Go back to an app's start page | ⌘⇧H |
+| Back / Forward | ⌘[ / ⌘] |
+| Open or close the to-do list | ⌘T, or the double check mark on the right |
+| Open or close the focus timer | ⌘⇧F, or the stopwatch on the right |
+| Open Settings | ⌘, (Command + comma), or the gear at the bottom left |
+| Hide the window (notifications keep working) | ⌘W |
+
+Links to other websites open in your normal browser. Hold ⌘ while clicking to open any link there.
+Downloads go to your Downloads folder.
+
+### Todos
+
+A panel on the right with two lists: **Personal** and **Work**.
+
+- Type in "Add a todo..." and press Return to add it at the top of the list.
+- Click the circle to mark it done. Done items go to the "N done" section, which you can collapse.
+- Drag a todo to reorder it, or drop it on the other list's name to move it there (Esc cancels).
+- Double-click a todo to edit it; delete all its text to remove it. The × appears when you hover over it.
+- **Due date:** hover over a todo and click the calendar icon (later today, tomorrow at 9, next Monday, or any
+  date and time). The date turns blue when it's due today and red when it's overdue.
+- At the due time you get a Mac notification, even if WorkHub is closed, with **Mark as done** and
+  **Remind me in 1 hour**. The Todos icon shows how many todos are overdue.
+
+### Focus
+
+A Pomodoro timer: 25 minutes of focus, then a 5-minute break, repeating until you press Stop.
+
+- **Start focus** starts it. **Pause/Resume**, **Skip** (jump to the next phase), **Stop**. Space also starts
+  and pauses when the panel is open.
+- It keeps running with the panel closed: the ring around the stopwatch shows the progress
+  (blue = focus, green = break). You get a notification at each change.
+- **Background sound** (rain, stream, wind…) plays during focus and fades out during breaks. Choose the sound
+  and the volume in the panel. To add your own: **Add sounds…** (m4a, mp3, wav or caf files).
+- It counts the focus sessions you complete each day.
+
+---
+
+## Settings (⌘,)
+
+- **Services:** add apps from the list (Gmail, Outlook, Teams, Slack, Notion, Linear, WhatsApp, Telegram…) or
+  any website. Drag to change the order (it's also the ⌘1–9 order). Change an app's name, address and icon.
+  - **Two accounts of the same app** (for example two WhatsApp numbers or two Gmail accounts): click
+    **Add service**, pick the app again (it says "Add another") and sign in with the other account. The new copy
+    has **Separate sign-in** turned on, so the two accounts don't mix (needs macOS 14 or later).
+  - **Separator below:** draws a line under an app's icon in the sidebar, to group your apps.
+  - **Sign out and reset data:** signs you out of that app and deletes its stored data.
+- **Notifications:** pause all notifications for an hour or until tomorrow, hide message text (useful when
+  sharing your screen), turn notifications and sounds on or off per app, and silence them during focus.
+- **Focus:** session lengths, a longer break every few sessions, and whether the next phase starts by itself.
+- **Appearance:** Dark, Light or Automatic (follows your Mac). The apps inside keep their own look.
+
+Changes apply immediately.
+
+---
+
+## Update to the latest version
+
+Open Terminal (⌘ Space, type `Terminal`, Return), paste this and press Return:
+
+```bash
+cd ~/WorkHub && git pull && ./build.sh install
+```
+
+WorkHub closes and reopens with the new version. Your sign-ins, settings and todos are kept.
+
+## Move to a new Mac
+
+1. Install WorkHub on the new Mac (see [Install it](#install-it)) and quit it (⌘Q).
+2. On the old Mac, open Finder, press ⌘⇧G, paste `~/Library/Application Support/WorkHub` and press Return.
+3. Copy `settings.json` (your apps and settings), `todos.json` (your todos) and the `icons` folder
+   (custom icons) to the same folder on the new Mac.
+4. Open WorkHub on the new Mac. You'll need to sign in to the apps again: sign-ins aren't copied.
+
+## Uninstall
+
+1. Quit WorkHub (⌘Q) and drag it from Applications to the Trash.
+2. To also delete your settings and todos: in Finder press ⌘⇧G, paste `~/Library/Application Support/WorkHub`
+   and move that folder to the Trash.
+
+---
+
+## Something isn't working?
+
+| Problem | What to do |
+|---|---|
+| An app shows a blank page | Right-click its icon in the sidebar > **Reload**. WorkHub also retries on its own when the network comes back. |
+| No notifications at all | **System Settings > Notifications > WorkHub**: turn on Allow notifications. Also check that notifications aren't paused in WorkHub's Settings > Notifications. |
+| No notifications from Gmail or Calendar | Turn them on inside Gmail and Calendar (see [First launch](#first-launch), step 3). |
+| Microphone or camera don't work in calls | **System Settings > Privacy & Security > Microphone** (or **Camera**): turn on WorkHub. |
+| macOS asks for permissions after every update | Run step 3 of the install once (`./setup-signing.sh`), then update again. |
+| "WorkHub can't be opened" (installer file) | See [option 2](#option-2-from-the-installer-file-a-colleague-gave-you), step 3. |
+| The Dock still shows an old icon | Open Terminal and run `killall Dock`. |
+| The unread count of an app is missing or wrong | Gmail counts unread mail in the Inbox. Slack's count can break when Slack changes its website. Calendar, ChatGPT and Claude have no count. |
+
+Notifications arrive as long as WorkHub is running, even with the window closed. If you quit it (⌘Q), they stop
+until you open it again: keep **Open at Login** on.
+
+---
+
+## For developers
+
+Native Swift + WebKit app, no dependencies, built with the Xcode Command Line Tools (no Xcode project).
+
+```bash
+./setup-signing.sh      # once per Mac: creates the self-signed "WorkHub Dev" code-signing certificate
+./build.sh              # builds WorkHub.app in the project folder
+./build.sh install      # builds, replaces /Applications/WorkHub.app and launches it
+./build.sh dmg          # builds WorkHub-<version>.dmg with the app and Distribution/How to open WorkHub.txt
 ./build.sh test         # runs the logic tests (Tests/ folder) without building the app
 swift Tools/make-icon.swift   # rebuilds Resources/AppIcon.icns from Tools/AppIcon.png (or .svg)
 ```
 
-The build always targets macOS 12 or later, the same minimum version declared in `Info.plist`.
+- **Targets:** builds always target macOS 12 or later, the minimum declared in `Info.plist`. `./build.sh dmg`
+  tries a universal build (Apple Silicon + Intel). With Command Line Tools that lack the Intel Swift libraries it
+  falls back to the current Mac's architecture and says so.
+- **Signing:** with the certificate the signature stays the same across builds, so macOS keeps keychain and
+  microphone permissions. Without a Developer ID certificate, other Macs show the "unidentified developer"
+  warning for DMG builds.
+- **Code:** `Sources/` (AppController and its extensions, ServiceController for each web view, Settings, Sidebar,
+  FocusTimer, Sounds…), `Resources/` (the HTML pages of the Todos, Focus and Settings panels), `Tests/`.
 
-If you open WorkHub from outside Applications (DMG, Downloads, build folder), it offers to move itself there.
-From the WorkHub menu you can turn on "Open at Login" (macOS 13 or later).
-To keep it in the Dock: right-click the icon > Options > Keep in Dock.
+**Data** (in `~/Library/Application Support/WorkHub/`):
 
-With the certificate the signature stays the same from one build to the next, so macOS doesn't ask again
-for keychain or microphone access. The first signed build asks one last time:
-enter your Mac password and choose "Always Allow".
+- `settings.json`: services and settings, saved on every change. A malformed service is ignored (the others are
+  kept); if the whole file can't be read, the app starts from the defaults and keeps the original as
+  `settings-broken-<date>.json`.
+- `todos.json`: todos, saved on every change. On every launch a copy goes to `todos.json.bak`; an unreadable file
+  is kept as `todos-broken-<date>.json`.
+- `icons/`: custom icons (`<id>.png`) and downloaded website icons (`auto/`).
+- `Sounds/`: Focus sounds. `build.sh` copies the project's `Sounds/` folder there; they aren't included in the
+  app or the DMG.
 
-Other Macs: the DMG works, but without an Apple Developer ID certificate macOS will show the
-"unidentified developer" warning (unblock it in System Settings > Privacy & Security > Open Anyway).
+**Known limitations:**
 
-## First launch
-
-1. Allow notifications when macOS asks.
-2. Sign in to each service. Gmail and Calendar share the Google session, so signing in once is enough.
-3. WhatsApp: scan the QR code with your phone.
-4. Turn on desktop notifications in the services that have them off by default:
-   Gmail (Settings > General > Desktop notifications) and Calendar (Settings > Notifications).
-
-Sign-ins are kept between launches.
-
-## Usage
-
-| Action | Shortcut |
-|---|---|
-| Go to service 1–6 | ⌘1 … ⌘6 |
-| Open/close the Todos panel | ⌘T (or the icon in the right bar) |
-| Open/close the Focus panel | ⌘⇧F (or the stopwatch in the right bar) |
-| Reload service / all | ⌘R / ⌘⇧R |
-| Reload any service, even one not on screen | right-click its icon > Reload |
-| Go back to the service's home page | ⌘⇧H |
-| Back / Forward | ⌘[ / ⌘] |
-| Hide window (services stay active) | ⌘W |
-
-External links: open in the default browser. ⌘+click forces the browser for internal links too.
-Downloads: saved to ~/Downloads.
-
-## Todos
-
-Panel on the right with two lists: Personal and Work.
-
-- Return in the "Add a todo..." field adds to the top of the open list.
-- Circle: completes. Completed todos go to the collapsible "N done" section.
-- Drag a todo up or down to reorder it; drag it onto the other list's name (at the top) to move it there.
-  Esc while dragging cancels.
-- Double-click the text: edit (empty text = delete). The × appears on hover.
-- Due date: calendar icon on hover (later today, tomorrow at 9, next Monday,
-  or a date and time of your choice). The label is red when overdue, blue when due today.
-- When a todo is due, a macOS notification arrives (even with WorkHub closed) with "Mark as done" and
-  "Remind me in 1 hour"; clicking it opens the panel on that todo. The Todos icon shows how many are overdue.
-- Data: `~/Library/Application Support/WorkHub/todos.json`, saved on every change.
-  On every launch a copy goes to `todos.json.bak`. If the file can't be read, the app starts with an empty list
-  and keeps the original as `todos-broken-<date>.json`.
-
-## Focus
-
-Pomodoro timer in the right bar: 25 minutes of focus, 5 of break, repeating until you press Stop.
-
-- Start focus starts the cycle; Pause/Resume; Skip jumps straight to the next phase; Stop resets.
-  Space starts or pauses when the panel is active.
-- The timer keeps running with the panel closed: the ring around the stopwatch in the bar shows
-  progress (blue = focus, green = break) and the tooltip shows the time left.
-- A notification arrives at every phase change; clicking it opens the panel.
-- Background sound: plays during focus and fades out during breaks. In the panel you choose the sound
-  (outside focus, tapping one plays a 6-second preview), the volume and the on/off switch.
-  The sounds have the same perceived loudness and loop seamlessly.
-- Sounds live in `~/Library/Application Support/WorkHub/Sounds/` (the project's `Sounds/` folder
-  is copied there by `build.sh`). To add more: "Add sounds…" in the panel, or copy m4a, mp3,
-  wav or caf files into the folder. They are not included in the app or the DMG.
-- Counts the focus sessions completed today (a skipped session doesn't count).
-
-## Settings (⌘,)
-
-- **Services**: add services from the catalog (Gmail, Outlook, Teams, Slack, Notion, Linear, WhatsApp,
-  Telegram…) or any website; reorder by dragging (the order also applies to ⌘1–9); change name,
-  address, badge and icon; "Sign out and reset data" signs out of the service and deletes its data.
-  The same service can be added more than once ("Add another" in the catalog). "Separate sign-in" gives a
-  service its own cookies and sign-in, for a second account such as another WhatsApp number (macOS 14 or later);
-  without it, all services share one browser session.
-  "Separator below" draws a line under the service's icon in the sidebar, to group services; it moves with
-  the service when you reorder, and the ⌘1–9 shortcuts keep counting services only.
-- **Notifications**: pause for 1 hour or until tomorrow, hidden content, notifications and sound per service,
-  silence during focus with the exceptions you choose.
-- **Focus**: durations, a long break every N sessions, start the next phase automatically or wait for a click,
-  end-of-phase sound.
-- **Appearance**: Dark, Light or Automatic theme (follows macOS) for the frame, bars, panels and Settings.
-  Services don't change: they always follow the macOS theme.
-
-Everything applies immediately and is saved to `~/Library/Application Support/WorkHub/settings.json`.
-If you edit it by hand, a malformed service is ignored (the others are kept); if the whole file can't be read,
-the app starts again from the default settings and keeps the original as `settings-broken-<date>.json`.
-Other useful files and folders: `icons/` (custom icons), `Sounds/` (Focus sounds), `todos.json`.
-
-Launch at login: WorkHub menu > "Open at Login". To keep it in the Dock: right-click the icon >
-Options > Keep in Dock.
-
-## Known limitations
-
-- Slack badge: it reads Slack's DOM, which changes often. If the badge doesn't show up, the selectors are in
-  `Sources/Scripts.swift` (`badgeTemplate`, `slack` mode). To inspect the page: Safari > Develop > WorkHub.
-- Gmail badge: counts unread messages in the Inbox.
-- Calendar, Claude and ChatGPT have no badge, only notifications where available.
-- Push notifications for a "sleeping" service (background service worker) aren't supported by WebKit
-  in apps: notifications arrive as long as the app is open, even with the window closed.
+- Slack badge: it reads Slack's DOM, which changes often. The selectors are in `Sources/Scripts.swift`
+  (`badgeTemplate`, `slack` mode). To inspect a page: Safari > Develop > WorkHub.
+- Separate sign-in uses per-identifier website data stores, available from macOS 14; on macOS 12–13 every
+  service shares one session.
+- Push notifications for a "sleeping" service (background service worker) aren't supported by WebKit in apps:
+  notifications arrive while the app is running, even with the window closed.
