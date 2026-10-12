@@ -1,19 +1,17 @@
 import Cocoa
 import WebKit
 
-// Builds Resources/AppIcon.icns from Tools/AppIcon.svg (1024 × 1024 rounded tile).
-// The SVG is rendered with WebKit (gradients and filters included), placed on the macOS icon grid
-// (824 px tile centered on a 1024 px canvas) with a soft shadow, then rendered at every size macOS needs.
+// Builds Resources/AppIcon.icns from the icon source in Tools/: AppIcon.png (1024 × 1024 rounded tile with
+// transparent corners) or AppIcon.svg (rendered with WebKit, gradients and filters included).
+// The tile is placed on the macOS icon grid (824 px tile centered on a 1024 px canvas) with a soft shadow,
+// then rendered at every size macOS needs.
 // Usage, from the repository root: swift Tools/make-icon.swift
 
 let canvas: CGFloat = 1024
 let body: CGFloat = 824
 let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+let pngURL = root.appendingPathComponent("Tools/AppIcon.png")
 let svgURL = root.appendingPathComponent("Tools/AppIcon.svg")
-guard let svg = try? String(contentsOf: svgURL, encoding: .utf8) else {
-    print("Tools/AppIcon.svg not found: run this from the repository root")
-    exit(1)
-}
 
 /// Renders the SVG at 1024 × 1024 points with a transparent background.
 final class SVGRenderer: NSObject, WKNavigationDelegate {
@@ -82,6 +80,13 @@ func writeIcon(from artwork: NSImage) -> Int32 {
     return iconutil.terminationStatus
 }
 
+if let png = NSImage(contentsOf: pngURL) {
+    exit(writeIcon(from: png))
+}
+guard let svg = try? String(contentsOf: svgURL, encoding: .utf8) else {
+    print("No Tools/AppIcon.png or Tools/AppIcon.svg: run this from the repository root")
+    exit(1)
+}
 let app = NSApplication.shared
 app.setActivationPolicy(.prohibited)
 let renderer = SVGRenderer()
