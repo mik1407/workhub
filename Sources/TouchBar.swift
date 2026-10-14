@@ -8,7 +8,8 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
     static let shared = ServicesTouchBar()
     static let changed = Notification.Name("WorkHubServicesTouchBarChanged")
     private static let itemID = NSTouchBarItem.Identifier("local.workhub.services")
-    private static let iconSide: CGFloat = 30   // the full height of the Touch Bar
+    private static let iconSide: CGFloat = 22   // icon inside the key
+    private static let keyWidth: CGFloat = 60   // about the width of the F1…F12 keys
 
     /// Called with the index of the tapped service.
     var onSelect: ((Int) -> Void)?
@@ -27,22 +28,18 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
 
     func touchBar(_ touchBar: NSTouchBar, makeItemForIdentifier identifier: NSTouchBarItem.Identifier) -> NSTouchBarItem? {
         guard identifier == Self.itemID, !icons.isEmpty else { return nil }
-        // Borderless buttons: the icon fills its whole slot (a segmented control would add padding).
+        // Standard Touch Bar keys (the same rounded gray keys as F1…F12), with the icon in the middle.
         let buttons: [NSButton] = icons.enumerated().map { index, icon in
             let button = NSButton(image: icon, target: self, action: #selector(tapped(_:)))
-            button.isBordered = false
-            button.imageScaling = .scaleProportionallyUpOrDown
+            button.imageScaling = .scaleNone
             button.tag = index
             button.setAccessibilityLabel(names[index])
-            button.wantsLayer = true
-            button.layer?.cornerRadius = 7
-            button.widthAnchor.constraint(equalToConstant: Self.iconSide).isActive = true
-            button.heightAnchor.constraint(equalToConstant: Self.iconSide).isActive = true
+            button.widthAnchor.constraint(equalToConstant: Self.keyWidth).isActive = true
             return button
         }
         let row = NSStackView(views: buttons)
         row.orientation = .horizontal
-        row.spacing = 8
+        row.spacing = 6
         rows.add(row)
         highlight(row)
         let item = NSCustomTouchBarItem(identifier: identifier)
@@ -55,12 +52,10 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
         onSelect?(sender.tag)
     }
 
-    /// Thin white ring around the selected service's icon.
+    /// The selected service's key is blue, like an active key in macOS's own Touch Bar.
     private func highlight(_ row: NSStackView) {
         for case let button as NSButton in row.arrangedSubviews {
-            let on = button.tag == selected
-            button.layer?.borderWidth = on ? 2 : 0
-            button.layer?.borderColor = NSColor.white.withAlphaComponent(0.95).cgColor
+            button.bezelColor = button.tag == selected ? NSColor.controlAccentColor : nil
         }
     }
 
@@ -83,13 +78,13 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
         let tile = image.map(IconStyle.normalize)
         let letter = String(name.prefix(1)).uppercased() as NSString
         return NSImage(size: NSSize(width: iconSide, height: iconSide), flipped: false) { rect in
-            NSBezierPath(roundedRect: rect, xRadius: 7, yRadius: 7).addClip()
+            NSBezierPath(roundedRect: rect, xRadius: 5, yRadius: 5).addClip()
             if let tile = tile {
                 tile.draw(in: rect)
             } else {
                 NSColor(white: 0.32, alpha: 1).setFill()
                 rect.fill()
-                let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 16, weight: .semibold),
+                let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 13, weight: .semibold),
                                                             .foregroundColor: NSColor.white]
                 let size = letter.size(withAttributes: attrs)
                 letter.draw(at: NSPoint(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2), withAttributes: attrs)
