@@ -42,7 +42,7 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
         configuration.userContentController = content
 
-        webView = WKWebView(frame: .zero, configuration: configuration)
+        webView = HubWebView(frame: .zero, configuration: configuration)   // services Touch Bar
         super.init()
 
         content.add(self, contentWorld: .defaultClient, name: "hubNotify")

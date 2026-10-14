@@ -13,7 +13,7 @@ final class AppController: NSObject, NSWindowDelegate {
     let todoPanel = TodoPanel()
     let todoButton = RailButton(image: RailIcons.doubleCheck(), tooltip: "Todos  ⌘T")
     let focusTimer = FocusTimer()
-    let focusPanel = LocalPanel(page: "focus", handler: "focus")
+    let focusPanel = LocalPanel(page: "focus", handler: "focus", servicesTouchBar: true)
     let focusButton = RailButton(image: RailIcons.stopwatch(), tooltip: "Focus  ⌘⇧F")
     var contentTrailing: NSLayoutConstraint!   // 0 = full-width service, -360 = leaves room for the panel
     var panelLeading: NSLayoutConstraint!      // -360 = panel visible, 0 = hidden under the right rail
@@ -47,6 +47,7 @@ final class AppController: NSObject, NSWindowDelegate {
         setupServices()
         setupShortcuts()
         setupTodos()
+        ServicesTouchBar.shared.onSelect = { [weak self] index in self?.select(index) }
         // "Automatic" theme: follows macOS switching from light to dark and back.
         appearanceObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
             DispatchQueue.main.async { self?.applyTheme() }
@@ -242,6 +243,7 @@ final class AppController: NSObject, NSWindowDelegate {
             service.tile?.toolTip = index < 9 ? "\(service.config.name)  ⌘\(index + 1)" : service.config.name
             service.tile?.needsDisplay = true
         }
+        refreshTouchBar()
         sidebar.setTiles(services.compactMap { $0.tile },
                          separatorsAfter: Set(services.indices.filter { services[$0].config.separatorAfter }))
         rebuildGoMenu()
@@ -285,7 +287,20 @@ final class AppController: NSObject, NSWindowDelegate {
     }
 
     func iconsChanged() {
+        refreshTouchBar()
         if settingsWindow?.isVisible == true { pushSettings() }
+    }
+
+    /// Services, icons or order changed: the Touch Bar shows the new list.
+    func refreshTouchBar() {
+        ServicesTouchBar.shared.setServices(services.map { (icon: $0.tile?.image, name: $0.config.name) },
+                                            selected: selectedIndex)
+        window.touchBar = nil   // the window's own Touch Bar (when no web view has the focus) is rebuilt too
+    }
+
+    // When no web view has the focus, the window itself shows the services Touch Bar.
+    func windowDidBecomeKey(_ notification: Notification) {
+        if window.touchBar == nil { window.touchBar = ServicesTouchBar.shared.makeTouchBar() }
     }
 
     // MARK: - Notification rules
@@ -312,6 +327,7 @@ final class AppController: NSObject, NSWindowDelegate {
         _ = window.makeFirstResponder(services[index].webView)
         UserDefaults.standard.set(services[index].config.id, forKey: "selectedService")
         services[index].retryIfNeverLoaded()
+        ServicesTouchBar.shared.select(index)
     }
 
     func showWindow() {

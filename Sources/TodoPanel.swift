@@ -38,7 +38,8 @@ final class TodoPanel {
         }
         lastState = saved
         panel = LocalPanel(page: "todos", handler: "todos",
-                           startupScript: "window.__todoData = \(LocalPanel.jsString(saved));")
+                           startupScript: "window.__todoData = \(LocalPanel.jsString(saved));",
+                           servicesTouchBar: true)
         let destination = fileURL
         panel.onMessage = { [weak self] body in
             guard let json = body as? String else { return }

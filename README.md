@@ -119,7 +119,7 @@ To quit completely, press ⌘Q.
 
 | To… | Do this |
 |---|---|
-| Switch app | Click its icon in the left sidebar, or press ⌘1, ⌘2, … ⌘9 |
+| Switch app | Click its icon in the left sidebar, press ⌘1, ⌘2, … ⌘9, or tap its icon in the Touch Bar (MacBook Pro with Touch Bar) |
 | Reload the app you're looking at | ⌘R (all apps: ⌘⇧R) |
 | Reload any app, even one not on screen | Right-click its icon in the sidebar > **Reload** |
 | Go back to an app's start page | ⌘⇧H |

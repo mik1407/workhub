@@ -12,13 +12,15 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     private let page: String
     private let startupScript: String?
 
-    init(page: String, handler: String, startupScript: String? = nil) {
+    /// servicesTouchBar: the page is in the main window, so it shows the services Touch Bar.
+    init(page: String, handler: String, startupScript: String? = nil, servicesTouchBar: Bool = false) {
         self.page = page
         self.startupScript = startupScript
         let content = WKUserContentController()
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = content
-        webView = WKWebView(frame: .zero, configuration: configuration)
+        webView = servicesTouchBar ? HubWebView(frame: .zero, configuration: configuration)
+                                   : WKWebView(frame: .zero, configuration: configuration)
         webView.alphaValue = 0   // invisible until the page is ready (no white flash)
         super.init()
         installScripts()

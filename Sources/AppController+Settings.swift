@@ -65,6 +65,7 @@ extension AppController {
 
     private func refreshTile(_ id: String) {
         services.first(where: { $0.config.id == id })?.tile?.image = IconStore.load(id: id)
+        refreshTouchBar()
     }
 
     /// State for the Settings page: settings, catalog, current icons.
