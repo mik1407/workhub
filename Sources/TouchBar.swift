@@ -8,14 +8,14 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
     static let shared = ServicesTouchBar()
     static let changed = Notification.Name("WorkHubServicesTouchBarChanged")
     private static let itemID = NSTouchBarItem.Identifier("local.workhub.services")
-    private static let iconSide: CGFloat = 22
+    private static let iconSide: CGFloat = 30   // the full height of the Touch Bar
 
     /// Called with the index of the tapped service.
     var onSelect: ((Int) -> Void)?
     private var icons: [NSImage] = []
     private var names: [String] = []
     private var selected = 0
-    private let controls = NSHashTable<NSSegmentedControl>.weakObjects()   // one per Touch Bar shown
+    private let rows = NSHashTable<NSStackView>.weakObjects()   // one row of buttons per Touch Bar shown
 
     func makeTouchBar() -> NSTouchBar {
         let bar = NSTouchBar()
@@ -27,19 +27,41 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
 
     func touchBar(_ touchBar: NSTouchBar, makeItemForIdentifier identifier: NSTouchBarItem.Identifier) -> NSTouchBarItem? {
         guard identifier == Self.itemID, !icons.isEmpty else { return nil }
-        let control = NSSegmentedControl(images: icons, trackingMode: .selectOne,
-                                         target: self, action: #selector(tapped(_:)))
-        for (index, name) in names.enumerated() { control.setToolTip(name, forSegment: index) }
-        control.selectedSegment = selected
-        controls.add(control)
+        // Borderless buttons: the icon fills its whole slot (a segmented control would add padding).
+        let buttons: [NSButton] = icons.enumerated().map { index, icon in
+            let button = NSButton(image: icon, target: self, action: #selector(tapped(_:)))
+            button.isBordered = false
+            button.imageScaling = .scaleProportionallyUpOrDown
+            button.tag = index
+            button.setAccessibilityLabel(names[index])
+            button.wantsLayer = true
+            button.layer?.cornerRadius = 7
+            button.widthAnchor.constraint(equalToConstant: Self.iconSide).isActive = true
+            button.heightAnchor.constraint(equalToConstant: Self.iconSide).isActive = true
+            return button
+        }
+        let row = NSStackView(views: buttons)
+        row.orientation = .horizontal
+        row.spacing = 8
+        rows.add(row)
+        highlight(row)
         let item = NSCustomTouchBarItem(identifier: identifier)
-        item.view = control
+        item.view = row
         item.customizationLabel = "Services"
         return item
     }
 
-    @objc private func tapped(_ sender: NSSegmentedControl) {
-        onSelect?(sender.selectedSegment)
+    @objc private func tapped(_ sender: NSButton) {
+        onSelect?(sender.tag)
+    }
+
+    /// Thin white ring around the selected service's icon.
+    private func highlight(_ row: NSStackView) {
+        for case let button as NSButton in row.arrangedSubviews {
+            let on = button.tag == selected
+            button.layer?.borderWidth = on ? 2 : 0
+            button.layer?.borderColor = NSColor.white.withAlphaComponent(0.95).cgColor
+        }
     }
 
     /// New list of services (added, removed, reordered, new icons): every Touch Bar is rebuilt.
@@ -53,7 +75,7 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
     /// The selected service changed: the highlighted icon follows it.
     func select(_ index: Int) {
         selected = index
-        for control in controls.allObjects where index < control.segmentCount { control.selectedSegment = index }
+        rows.allObjects.forEach(highlight)
     }
 
     /// The service's tile as in the sidebar (rounded, same normalized icon), or its initial on a gray tile.
@@ -61,13 +83,13 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
         let tile = image.map(IconStyle.normalize)
         let letter = String(name.prefix(1)).uppercased() as NSString
         return NSImage(size: NSSize(width: iconSide, height: iconSide), flipped: false) { rect in
-            NSBezierPath(roundedRect: rect, xRadius: 5, yRadius: 5).addClip()
+            NSBezierPath(roundedRect: rect, xRadius: 7, yRadius: 7).addClip()
             if let tile = tile {
                 tile.draw(in: rect)
             } else {
                 NSColor(white: 0.32, alpha: 1).setFill()
                 rect.fill()
-                let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 13, weight: .semibold),
+                let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 16, weight: .semibold),
                                                             .foregroundColor: NSColor.white]
                 let size = letter.size(withAttributes: attrs)
                 letter.draw(at: NSPoint(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2), withAttributes: attrs)
