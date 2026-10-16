@@ -169,6 +169,8 @@
 
   .text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .item.done .text { color: var(--faint); text-decoration: line-through; text-decoration-color: rgba(93, 106, 130, 0.7); }
+  .text a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .item.done .text a { color: inherit; }
   .edit {
     flex: 1;
     min-width: 0;
@@ -405,6 +407,26 @@
     return e;
   }
 
+  // Web addresses in a todo's text become links: http(s)://… and www.…
+  // Trailing punctuation (a period at the end of the sentence, a closing parenthesis) stays text.
+  const LINK = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+  function appendLinkified(parent, text) {
+    let last = 0;
+    for (const match of text.matchAll(LINK)) {
+      let url = match[0];
+      while (/[.,;:!?)\]]$/.test(url) && !(url.endsWith(')') && url.includes('('))) url = url.slice(0, -1);
+      const start = match.index;
+      if (start > last) parent.append(text.slice(last, start));
+      const a = document.createElement('a');
+      a.href = /^www\./i.test(url) ? 'https://' + url : url;
+      a.textContent = url;
+      a.title = a.href;
+      parent.append(a);
+      last = start + url.length;
+    }
+    if (last < text.length) parent.append(text.slice(last));
+  }
+
   function render() { renderDate(); renderTabs(); renderList(); }
 
   function renderDate() {
@@ -474,7 +496,7 @@
       r.append(editInput(t));
     } else {
       const text = el('span', 'text');
-      text.textContent = t.text;
+      appendLinkified(text, t.text);
       r.append(text);
     }
     if (!t.done && t.due) {
@@ -550,6 +572,11 @@
   });
 
   listEl.addEventListener('click', (e) => {
+    // Links open in the browser (the app intercepts the navigation); a double-click opens them only once.
+    if (closest(e, 'a')) {
+      if (e.detail > 1 || suppressClick) e.preventDefault();
+      return;
+    }
     if (suppressClick) return;
     const button = closest(e, '[data-action]');
     if (!button) return;
@@ -591,7 +618,7 @@
   listEl.addEventListener('mousedown', (e) => {
     if (e.button !== 0 || editingId) return;
     const target = elementOf(e.target);
-    if (!target || target.closest('button, input')) return;
+    if (!target || target.closest('button, input, a')) return;
     const item = target.closest('.item');
     if (!item || item.classList.contains('done')) return;
     drag = { id: item.dataset.id, row: item, startX: e.clientX, startY: e.clientY, active: false, target: null };

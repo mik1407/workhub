@@ -140,6 +140,8 @@ A panel on the right with two lists: **Personal** and **Work**.
 - Click the circle to mark it done. Done items go to the "N done" section, which you can collapse.
 - Drag a todo to reorder it, or drop it on the other list's name to move it there (Esc cancels).
 - Double-click a todo to edit it; delete all its text to remove it. The × appears when you hover over it.
+- Web addresses in a todo (starting with `https://`, `http://` or `www.`) become links: click one to open it in
+  your browser.
 - **Due date:** hover over a todo and click the calendar icon (later today, tomorrow at 9, next Monday, or any
   date and time). The date turns blue when it's due today and red when it's overdue.
 - At the due time you get a Mac notification, even if WorkHub is closed, with **Mark as done** and
