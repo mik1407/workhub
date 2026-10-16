@@ -364,9 +364,14 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         let url = navigationAction.request.url
         let address = url?.absoluteString ?? ""
         let blank = address.isEmpty || address == "about:blank"
-        if blank || isAuthHost(url?.host) {
+        // A sized popup on the service's own site is a sign-in window too: e.g. Fellow's "Log in with Google"
+        // opens fellow.app/google/oauth/… at 480 × 720, which then moves on to Google.
+        let ownSite = baseDomain(url?.host) == baseDomain(config.url.host)
+        let sized = windowFeatures.width != nil || windowFeatures.height != nil
+        if blank || isAuthHost(url?.host) || (ownSite && sized) {
             // OAuth login popup (or a blank window that will be filled via script)
-            let popup = PopupWindow(configuration: configuration, owner: self, showImmediately: !blank)
+            let popup = PopupWindow(configuration: configuration, owner: self, showImmediately: !blank,
+                                    startsOnAuthHost: isAuthHost(url?.host))
             popups.append(popup)
             return popup.webView
         }
@@ -499,14 +504,17 @@ final class PopupWindow: NSObject, NSWindowDelegate, WKNavigationDelegate, WKUID
     private var handingOff = false
     private var closing = false
 
-    init(configuration: WKWebViewConfiguration, owner: ServiceController, showImmediately: Bool) {
+    /// startsOnAuthHost: the popup opens directly on a sign-in page (otherwise sign-in counts as seen
+    /// only once it passes through one, so a popup on the service's own site isn't hidden right away).
+    init(configuration: WKWebViewConfiguration, owner: ServiceController, showImmediately: Bool,
+         startsOnAuthHost: Bool) {
         let frame = NSRect(x: 0, y: 0, width: 520, height: 700)
         webView = WKWebView(frame: frame, configuration: configuration)
         window = NSWindow(contentRect: frame, styleMask: [.titled, .closable, .resizable],
                           backing: .buffered, defer: false)
         self.owner = owner
         self.trusted = showImmediately
-        self.authSeen = showImmediately
+        self.authSeen = startsOnAuthHost
         super.init()
         window.isReleasedWhenClosed = false
         window.title = owner.config.name
