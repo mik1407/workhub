@@ -156,6 +156,16 @@ check(!Theme.apply(.light), "same theme: no change")
 equal(Theme.content, NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), "white cards in light mode")
 check(Theme.apply(.dark) && !Theme.isLight, "back to dark")
 
+section("Slack links")
+equal(ServiceController.slackWebURL(from: URL(string: "slack://channel?team=T012AB&id=C34CD&message=1700000000.000100&host=slack.com")!)?.absoluteString,
+      "https://app.slack.com/client/T012AB/C34CD", "message link -> its channel on the web")
+equal(ServiceController.slackWebURL(from: URL(string: "slack://channel?team=T012AB&id=C34CD&thread_ts=1700000000.000100")!)?.absoluteString,
+      "https://app.slack.com/client/T012AB/C34CD/thread/C34CD-1700000000.000100", "thread link -> the thread")
+equal(ServiceController.slackWebURL(from: URL(string: "slack://open?team=T012AB")!)?.absoluteString,
+      "https://app.slack.com/client/T012AB", "workspace link -> the workspace")
+check(ServiceController.slackWebURL(from: URL(string: "slack://channel?id=C34CD")!) == nil, "no team -> not handled")
+check(ServiceController.slackWebURL(from: URL(string: "slack://channel?team=T1/../x&id=C2")!) == nil, "unexpected characters -> not handled")
+
 section("Separate sign-in")
 equal(sessionIdentifier(for: "gmail-2"), sessionIdentifier(for: "gmail-2"), "same service -> same storage on every launch")
 check(sessionIdentifier(for: "gmail-2") != sessionIdentifier(for: "gmail-3"), "different services -> different storage")

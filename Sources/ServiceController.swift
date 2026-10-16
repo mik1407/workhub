@@ -139,6 +139,17 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         }
         let scheme = (url.scheme ?? "").lowercased()
 
+        // Slack's "Launching <workspace>" page (opened by a message link) tries to open the desktop app
+        // with slack://channel?team=…&id=…: in the Slack service that becomes the same channel on the web.
+        if scheme == "slack", baseDomain(config.url.host) == "slack.com" {
+            NSLog("WorkHub: Slack desktop link %@ -> %@", url.absoluteString, Self.slackWebURL(from: url)?.absoluteString ?? "not handled")
+        }
+        if scheme == "slack", baseDomain(config.url.host) == "slack.com", let web = Self.slackWebURL(from: url) {
+            decisionHandler(.cancel)
+            _ = webView.load(URLRequest(url: web))
+            return
+        }
+
         // mailto:, zoommtg:, slack:// etc. → system app, but only if you clicked it yourself
         // (stops Slack from opening the desktop app on its own at login).
         if !Self.webSchemes.contains(scheme) {
@@ -162,6 +173,27 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
     func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse,
                  decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
         decisionHandler(Self.responsePolicy(navigationResponse))
+    }
+
+    /// slack://channel?team=T…&id=C…[&thread_ts=…] → https://app.slack.com/client/T…/C…[/thread/C…-…].
+    /// Other slack:// links with a team (e.g. slack://open?team=T…) → that workspace on the web.
+    static func slackWebURL(from deepLink: URL) -> URL? {
+        guard deepLink.scheme?.lowercased() == "slack",
+              let items = URLComponents(url: deepLink, resolvingAgainstBaseURL: false)?.queryItems else { return nil }
+        func value(_ name: String) -> String? {
+            items.first { $0.name == name }?.value.flatMap { $0.isEmpty ? nil : $0 }
+        }
+        let safe = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "."))
+        guard let team = value("team"), team.unicodeScalars.allSatisfy(safe.contains) else { return nil }
+        var path = "/client/\(team)"
+        if deepLink.host?.lowercased() == "channel", let channel = value("id"),
+           channel.unicodeScalars.allSatisfy(safe.contains) {
+            path += "/\(channel)"
+            if let thread = value("thread_ts"), thread.unicodeScalars.allSatisfy(safe.contains) {
+                path += "/thread/\(channel)-\(thread)"
+            }
+        }
+        return URL(string: "https://app.slack.com" + path)
     }
 
     static func responsePolicy(_ navigationResponse: WKNavigationResponse) -> WKNavigationResponsePolicy {
