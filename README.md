@@ -167,7 +167,7 @@ A Pomodoro timer: 25 minutes of focus, then a 5-minute break, repeating until yo
 ## Settings (⌘,)
 
 - **Services:** add apps from the list (Gmail, Outlook, Teams, Slack, Notion, Linear, WhatsApp, Telegram…) or
-  any website. Drag to change the order (it's also the ⌘1–9 order). Change an app's name, address and icon.
+  any website. Fellow is in the list too, for meeting notes and agendas. Drag to change the order (it's also the ⌘1–9 order). Change an app's name, address and icon.
   - **Two accounts of the same app** (for example two WhatsApp numbers or two Gmail accounts): click
     **Add service**, pick the app again (it says "Add another") and sign in with the other account. The new copy
     has **Separate sign-in** turned on, so the two accounts don't mix (needs macOS 14 or later).

@@ -156,6 +156,10 @@ check(!Theme.apply(.light), "same theme: no change")
 equal(Theme.content, NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), "white cards in light mode")
 check(Theme.apply(.dark) && !Theme.isLight, "back to dark")
 
+section("Catalog")
+check(serviceCatalog.contains { $0.id == "fellow" && $0.url.host == "fellow.app" }, "Fellow is in the catalog")
+equal(Set(serviceCatalog.map(\.id)).count, serviceCatalog.count, "catalog ids are unique")
+
 section("Slack links")
 equal(ServiceController.slackWebURL(from: URL(string: "slack://channel?team=T012AB&id=C34CD&message=1700000000.000100&host=slack.com")!)?.absoluteString,
       "https://app.slack.com/client/T012AB/C34CD", "message link -> its channel on the web")

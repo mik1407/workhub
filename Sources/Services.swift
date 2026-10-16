@@ -75,6 +75,7 @@ let serviceCatalog: [ServiceConfig] = [
     ServiceConfig(id: "gmail", name: "Gmail", url: URL(string: "https://mail.google.com/mail/u/0/")!, badge: .gmail),
     ServiceConfig(id: "calendar", name: "Google Calendar", url: URL(string: "https://calendar.google.com/calendar/u/0/r")!, badge: .none),
     ServiceConfig(id: "drive", name: "Google Drive", url: URL(string: "https://drive.google.com/")!, badge: .none),
+    ServiceConfig(id: "fellow", name: "Fellow", url: URL(string: "https://fellow.app/home/")!, badge: .none),
     ServiceConfig(id: "outlook", name: "Outlook", url: URL(string: "https://outlook.office.com/mail/")!, badge: .title),
     ServiceConfig(id: "teams", name: "Microsoft Teams", url: URL(string: "https://teams.microsoft.com/")!, badge: .title),
     ServiceConfig(id: "slack", name: "Slack", url: URL(string: "https://app.slack.com/client")!, badge: .slack),
