@@ -4,8 +4,18 @@ import Cocoa
 extension AppController {
     // MARK: - Todo: due dates and reminders
 
+    /// Slack links from the todos open in WorkHub's Slack service; any other link goes to the browser.
+    func openInSlack(_ url: URL) -> Bool {
+        guard baseDomain(url.host) == "slack.com",
+              let slack = services.first(where: { baseDomain($0.config.url.host) == "slack.com" }) else { return false }
+        show(service: slack)
+        slack.open(url)
+        return true
+    }
+
     func setupTodos() {
         todoPanel.onSaved = { [weak self] json in self?.todosChanged(json) }
+        todoPanel.onOpenLink = { [weak self] url in self?.openInSlack(url) ?? false }
         todosChanged(todoPanel.lastState)
         // A todo becomes overdue as time passes: badge rechecked every 30 seconds
         let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in self?.refreshOverdueBadge() }

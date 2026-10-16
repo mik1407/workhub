@@ -9,6 +9,8 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     let webView: WKWebView
     var onMessage: ((Any) -> Void)?
     var onLoad: (() -> Void)?
+    /// A web link was clicked: return true if the app opened it itself, false to open it in the browser.
+    var onOpenLink: ((URL) -> Bool)?
     private let page: String
     private let startupScript: String?
 
@@ -76,7 +78,7 @@ final class LocalPanel: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
             decisionHandler(.allow)
             return
         }
-        if url.scheme == "http" || url.scheme == "https" { NSWorkspace.shared.open(url) }
+        if url.scheme == "http" || url.scheme == "https", onOpenLink?(url) != true { NSWorkspace.shared.open(url) }
         decisionHandler(.cancel)
     }
 

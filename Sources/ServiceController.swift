@@ -229,6 +229,11 @@ final class ServiceController: NSObject, WKNavigationDelegate, WKUIDelegate,
         if webView.url == nil { reloadHome() } else { _ = webView.reload() }
     }
 
+    /// Opens a link of this service in its own view (e.g. a Slack message link from a todo).
+    func open(_ url: URL) {
+        _ = webView.load(URLRequest(url: url))
+    }
+
     func reloadHome() {
         _ = webView.load(URLRequest(url: config.url))
     }

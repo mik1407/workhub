@@ -10,6 +10,8 @@ final class TodoPanel {
     var webView: WKWebView { panel.webView }
     /// Last saved state (JSON), used for reminders and the badge.
     private(set) var lastState: String
+    /// A link in a todo was clicked: return true if the app opened it (e.g. in Slack), false for the browser.
+    var onOpenLink: ((URL) -> Bool)?
     /// Called on every save with the full state.
     var onSaved: ((String) -> Void)?
     private let fileURL: URL
@@ -47,6 +49,7 @@ final class TodoPanel {
             self?.lastState = json
             self?.onSaved?(json)
         }
+        panel.onOpenLink = { [weak self] url in self?.onOpenLink?(url) ?? false }
         panel.onLoad = { [weak self] in
             guard let self = self else { return }
             self.loaded = true
