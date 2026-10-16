@@ -407,25 +407,54 @@
     return e;
   }
 
-  // Web addresses in a todo's text become links: http(s)://… and www.…
-  // Trailing punctuation (a period at the end of the sentence, a closing parenthesis) stays text.
-  const LINK = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+  // Links in a todo's text:
+  // - [label](address): shows "label" as the link (made by pasting an address over selected text);
+  // - bare addresses, http(s)://… and www.…: the address itself is the link. Trailing punctuation
+  //   (a period at the end of the sentence, a closing parenthesis) stays text.
+  const LINK = /\[([^\]\n]+)\]\(((?:https?:\/\/|www\.)[^\s()]+(?:\([^\s()]*\)[^\s()]*)*)\)|\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+  const ADDRESS = /^(?:https?:\/\/|www\.)\S+$/i;
+  const hrefOf = (url) => (/^www\./i.test(url) ? 'https://' + url : url);
   function appendLinkified(parent, text) {
     let last = 0;
     for (const match of text.matchAll(LINK)) {
-      let url = match[0];
-      while (/[.,;:!?)\]]$/.test(url) && !(url.endsWith(')') && url.includes('('))) url = url.slice(0, -1);
       const start = match.index;
+      let length = match[0].length, url, label;
+      if (match[1]) {
+        url = match[2];
+        label = match[1];
+      } else {
+        url = match[0];
+        while (/[.,;:!?)\]]$/.test(url) && !(url.endsWith(')') && url.includes('('))) url = url.slice(0, -1);
+        label = url;
+        length = url.length;
+      }
       if (start > last) parent.append(text.slice(last, start));
       const a = document.createElement('a');
-      a.href = /^www\./i.test(url) ? 'https://' + url : url;
-      a.textContent = url;
+      a.href = hrefOf(url);
+      a.textContent = label;
       a.title = a.href;
       parent.append(a);
-      last = start + url.length;
+      last = start + length;
     }
     if (last < text.length) parent.append(text.slice(last));
   }
+
+  // Pasting an address over selected text turns that text into a link: "see example" → "see [example](…)".
+  function linkOnPaste(input) {
+    input.addEventListener('paste', (e) => {
+      const url = (e.clipboardData && e.clipboardData.getData('text/plain') || '').trim();
+      const { selectionStart: s, selectionEnd: end, value } = input;
+      if (!ADDRESS.test(url) || s === end) return;
+      const label = value.slice(s, end).replace(/[\[\]]/g, '');
+      if (!label.trim()) return;
+      e.preventDefault();
+      const link = `[${label}](${url})`;
+      input.value = value.slice(0, s) + link + value.slice(end);
+      input.setSelectionRange(s + link.length, s + link.length);
+    });
+  }
+
+  linkOnPaste(addEl);
 
   function render() { renderDate(); renderTabs(); renderList(); }
 
@@ -520,6 +549,7 @@
 
   function editInput(t) {
     const input = el('input', 'edit');
+    linkOnPaste(input);
     input.value = t.text;
     input.spellcheck = false;
     let finished = false;

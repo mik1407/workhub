@@ -140,8 +140,11 @@ A panel on the right with two lists: **Personal** and **Work**.
 - Click the circle to mark it done. Done items go to the "N done" section, which you can collapse.
 - Drag a todo to reorder it, or drop it on the other list's name to move it there (Esc cancels).
 - Double-click a todo to edit it; delete all its text to remove it. The × appears when you hover over it.
-- Web addresses in a todo (starting with `https://`, `http://` or `www.`) become links. Slack links (for example
-  a message link copied from Slack) open in WorkHub's Slack; any other link opens in your browser.
+- **Links:** web addresses in a todo (starting with `https://`, `http://` or `www.`) become links.
+  To link a word instead of showing the address: type the todo, select the word and paste the link (⌘V):
+  "call about the offer" becomes "call about the **offer**", with "offer" clickable. You can also type it
+  as `[offer](https://…)`. Slack links (for example a message link copied from Slack) open in WorkHub's Slack;
+  any other link opens in your browser.
 - **Due date:** hover over a todo and click the calendar icon (later today, tomorrow at 9, next Monday, or any
   date and time). The date turns blue when it's due today and red when it's overdue.
 - At the due time you get a Mac notification, even if WorkHub is closed, with **Mark as done** and

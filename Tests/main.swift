@@ -118,6 +118,9 @@ let todos = """
 """
 equal(TodoReminders.overdueCount(in: todos), 1, "only open todos already past due")
 equal(TodoReminders.overdueCount(in: "broken"), 0, "broken JSON -> 0")
+equal(TodoReminders.plainText("see [example](https://example.com/a) now"), "see example now", "notification text: link label only")
+equal(TodoReminders.plainText("wiki [Foo](https://en.wikipedia.org/wiki/Foo_(bar))"), "wiki Foo", "label link with parentheses")
+equal(TodoReminders.plainText("plain https://example.com"), "plain https://example.com", "bare address unchanged")
 
 // MARK: - Sounds and downloads
 

@@ -35,7 +35,7 @@ enum TodoReminders {
                     guard due > now else { continue }
 
                     let content = UNMutableNotificationContent()
-                    content.title = (todo["text"] as? String) ?? "Todo"
+                    content.title = plainText((todo["text"] as? String) ?? "Todo")
                     if let listId = todo["listId"] as? String, let list = listNames[listId] {
                         content.body = "Due now in \(list)"
                     } else {
@@ -53,6 +53,12 @@ enum TodoReminders {
                 center.removeDeliveredNotifications(withIdentifiers: completed)
             }
         }
+    }
+
+    /// A todo's text as shown in the list: "[label](address)" links become just "label".
+    static func plainText(_ text: String) -> String {
+        text.replacingOccurrences(of: #"\[([^\]\n]+)\]\((?:https?://|www\.)[^\s()]+(?:\([^\s()]*\)[^\s()]*)*\)"#,
+                                  with: "$1", options: [.regularExpression, .caseInsensitive])
     }
 
     /// Open todos past their due date (badge on the Todos icon).
