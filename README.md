@@ -137,8 +137,8 @@ Downloads go to your Downloads folder.
 A panel on the right with two lists, **Personal** and **Work**, and a **Today** view for what you want to do today.
 
 - **Today:** hover over any todo and click the sun to add it to Today (click it again to remove it), or drag the todo
-  onto the Today tab. The todo stays in its own list too: in Today a small label shows where it comes from (Work or
-  Personal). A todo you add while in Today goes to the last list you opened, already in Today.
+  onto the Today tab. The todo stays in its own list too: in Today a small badge shows where it comes from (W for Work,
+  P for Personal). A todo you add while in Today goes to the last list you opened, already in Today.
 
 - Type in "Add a todo..." and press Return to add it at the top of the list.
 - Click the circle to mark it done. Done items go to the "N done" section, which you can collapse.

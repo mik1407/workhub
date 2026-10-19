@@ -207,7 +207,7 @@
   .icon.sun.on { opacity: 1; color: var(--accent); }   /* already in Today: always visible */
 
   /* In Today: the list each todo comes from */
-  .tag { flex: none; height: 18px; padding: 0 7px; border-radius: 9px; font-size: 11px; font-weight: 500; line-height: 18px; }
+  .tag { flex: none; width: 18px; height: 18px; border-radius: 9px; font-size: 10.5px; font-weight: 600; line-height: 18px; text-align: center; }
   .tag.work { background: var(--accent-soft); color: var(--accent); }
   .tag.personal { background: rgba(167, 139, 250, 0.15); color: #b39dfb; }
   :root[data-theme="light"] .tag.personal { background: rgba(124, 92, 214, 0.1); color: #7c5cd6; }
@@ -549,7 +549,8 @@
     }
     if (state.active === TODAY) {
       const tag = el('span', 'tag ' + t.listId);
-      tag.textContent = listName(t.listId);
+      tag.textContent = listName(t.listId).charAt(0);   // W or P; the full name is in the tooltip
+      tag.title = listName(t.listId);
       r.append(tag);
     }
     // Next to the text, so the sun of a todo in Today sits right after it
