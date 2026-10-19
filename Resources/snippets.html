@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Snippets</title>
+<style>
+  :root {
+    --bg: #0a1120;            /* same blue as the frame */
+    --surface: #111a2c;
+    --surface-2: #1b2740;
+    --hover: rgba(255, 255, 255, 0.045);
+    --line: rgba(255, 255, 255, 0.07);
+    --text: #e8ecf3;
+    --muted: #8b97ad;
+    --faint: #5d6a82;
+    --accent: #2f9be9;
+    --accent-soft: rgba(47, 155, 233, 0.14);
+    --green: #3fca8e;
+    --danger: #ff6b5e;
+    --pad: 20px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font: 14.5px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: default; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg { display: block; }
+
+  .head { flex: none; padding: 13px var(--pad) 0; }
+  .head h1 { margin: 0; font-size: 17px; font-weight: 600; line-height: 22px; letter-spacing: -0.015em; }
+  .head .sub { margin-top: 1px; color: var(--muted); font-size: 12px; line-height: 16px; }
+
+  .add {
+    flex: none; display: flex; align-items: center; gap: 12px;
+    margin: 14px calc(var(--pad) - 10px) 6px; padding: 0 10px; height: 40px; width: calc(100% - 2 * (var(--pad) - 10px));
+    border: 0; border-radius: 9px; background: transparent; color: var(--faint); text-align: left;
+  }
+  .add:hover { background: var(--hover); color: var(--muted); }
+  .add .plus { display: grid; place-items: center; width: 19px; height: 19px; border: 1.5px dashed var(--faint); border-radius: 50%; }
+  .add .plus svg { width: 11px; height: 11px; }
+
+  /* Form to add or edit a snippet */
+  .form { flex: none; margin: 10px var(--pad) 8px; padding: 12px; border-radius: 12px; background: var(--surface); }
+  .form[hidden] { display: none; }
+  .form input, .form textarea {
+    display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; outline: none;
+    background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); resize: none;
+    -webkit-user-select: text; user-select: text;
+  }
+  .form input:focus, .form textarea:focus { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .form textarea { margin-top: 8px; min-height: 64px; }
+  .form .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+  .btn { height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--surface-2); font-size: 13px; font-weight: 500; }
+  .btn.primary { background: var(--accent); color: #fff; }
+  .btn:disabled { opacity: 0.4; }
+
+  /* List: click a snippet to copy it */
+  .list { flex: 1; overflow-y: auto; padding: 0 0 28px; }
+  .item {
+    position: relative; margin: 0 calc(var(--pad) - 10px); padding: 8px 10px; border-radius: 9px;
+    transition: background-color 0.1s;
+  }
+  .item:hover { background: var(--hover); }
+  .item:active { background: var(--accent-soft); }
+  .item .label { color: var(--muted); font-size: 12px; font-weight: 500; line-height: 16px; }
+  .item .value { margin-top: 1px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .item .copied {
+    position: absolute; right: 10px; top: 8px; height: 20px; padding: 0 8px; border-radius: 10px;
+    background: var(--green); color: #06281a; font-size: 11.5px; font-weight: 600; line-height: 20px;
+    opacity: 0; transform: translateY(2px); transition: opacity 0.15s, transform 0.15s; pointer-events: none;
+  }
+  .item.done .copied { opacity: 1; transform: none; }
+
+  /* Edit and delete: over the end of the row on hover, so they don't take space from the text */
+  .actions {
+    position: absolute; right: 6px; top: 6px; display: none; gap: 2px; padding-left: 4px;
+    background: linear-gradient(var(--hover), var(--hover)), var(--bg);
+  }
+  .item:hover .actions { display: flex; }
+  .item.done .actions { display: none; }
+  .icon {
+    display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px;
+    background: transparent; color: var(--faint);
+  }
+  .icon svg { width: 13px; height: 13px; }
+  .icon:hover { background: var(--surface); color: var(--text); }
+  .icon.delete:hover { background: rgba(255, 107, 94, 0.12); color: var(--danger); }
+
+  .empty { padding: 36px var(--pad) 0; text-align: center; }
+  .empty strong { display: block; font-size: 14px; font-weight: 600; }
+  .empty span { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--surface-2); }
+
+  /* Light theme (Settings > Appearance): the app sets data-theme="light" on the page */
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #f0f2f6;
+    --surface-2: #e4e8ee;
+    --hover: rgba(15, 23, 42, 0.045);
+    --line: rgba(15, 23, 42, 0.1);
+    --text: #1b2333;
+    --muted: #5c6880;
+    --faint: #8a95a8;
+    --accent: #1a7fd0;
+    --accent-soft: rgba(26, 127, 208, 0.1);
+    --green: #12935f;
+    --danger: #d93d32;
+    color-scheme: light;
+  }
+  :root[data-theme="light"] .item .copied { color: #fff; }
+  :root[data-theme="light"] ::-webkit-scrollbar-thumb { background: #d3d9e2; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <header class="head">
+    <h1>Snippets</h1>
+    <div class="sub">Click a snippet to copy it</div>
+  </header>
+
+  <button class="add" id="add" type="button">
+    <span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+    Add a snippet
+  </button>
+
+  <div class="form" id="form" hidden>
+    <input id="label" placeholder="Name, for example Phone" autocomplete="off" spellcheck="false" maxlength="60">
+    <textarea id="value" placeholder="Text to copy" spellcheck="false"></textarea>
+    <div class="row">
+      <button class="btn" id="cancel" type="button">Cancel</button>
+      <button class="btn primary" id="save" type="button">Save</button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const send = (message) => { try { window.webkit.messageHandlers.snippets.postMessage(message); } catch (_) {} };
+
+  const ICON = {
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  };
+
+  // Saved snippets arrive before this script runs (window.__snippetData), like the todos.
+  function load() {
+    let saved = null;
+    try {
+      saved = typeof window.__snippetData === 'string' ? JSON.parse(window.__snippetData) : window.__snippetData;
+    } catch (_) { saved = null; }
+    if (!saved || !Array.isArray(saved.snippets)) return [];
+    return saved.snippets
+      .filter((s) => s && typeof s.id === 'string' && typeof s.value === 'string')
+      .map((s) => ({ id: s.id, label: String(s.label || ''), value: s.value }));
+  }
+
+  let snippets = load();
+  let editingId = null;   // null = adding a new snippet
+
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const save = () => send({ action: 'save', data: JSON.stringify({ version: 1, snippets }) });
+
+  function render() {
+    const list = $('list');
+    list.textContent = '';
+    if (!snippets.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      const title = document.createElement('strong');
+      title.textContent = 'No snippets yet';
+      const hint = document.createElement('span');
+      hint.textContent = 'Save text you paste often, like your phone number, address or IBAN. Click it to copy it.';
+      empty.append(title, hint);
+      list.append(empty);
+      return;
+    }
+    for (const s of snippets) {
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.dataset.id = s.id;
+      item.title = 'Click to copy';
+      if (s.label) {
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = s.label;
+        item.append(label);
+      }
+      const value = document.createElement('div');
+      value.className = 'value';
+      value.textContent = s.value;
+      const copied = document.createElement('span');
+      copied.className = 'copied';
+      copied.textContent = 'Copied';
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'icon';
+      edit.dataset.action = 'edit';
+      edit.title = 'Edit';
+      edit.innerHTML = ICON.edit;
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'icon delete';
+      del.dataset.action = 'delete';
+      del.title = 'Delete';
+      del.innerHTML = ICON.x;
+      actions.append(edit, del);
+      item.append(value, copied, actions);
+      list.append(item);
+    }
+  }
+
+  // Click: copy right away (the app writes it to the clipboard). Edit and delete are the buttons on hover.
+  $('list').addEventListener('click', (e) => {
+    const item = e.target.closest && e.target.closest('.item');
+    if (!item) return;
+    const s = snippets.find((x) => x.id === item.dataset.id);
+    if (!s) return;
+    const button = e.target.closest('[data-action]');
+    if (button && button.dataset.action === 'delete') {
+      snippets = snippets.filter((x) => x !== s);
+      save();
+      render();
+      return;
+    }
+    if (button && button.dataset.action === 'edit') {
+      openForm(s);
+      return;
+    }
+    send({ action: 'copy', text: s.value });
+    item.classList.add('done');
+    setTimeout(() => item.classList.remove('done'), 1100);
+  });
+
+  function openForm(s) {
+    editingId = s ? s.id : null;
+    $('label').value = s ? s.label : '';
+    $('value').value = s ? s.value : '';
+    $('form').hidden = false;
+    $('add').hidden = true;
+    updateSave();
+    (s ? $('value') : $('label')).focus();
+  }
+
+  function closeForm() {
+    $('form').hidden = true;
+    $('add').hidden = false;
+    editingId = null;
+  }
+
+  function submit() {
+    const label = $('label').value.trim();
+    const value = $('value').value.replace(/\s+$/, '');
+    if (!value.trim()) return;
+    const existing = snippets.find((x) => x.id === editingId);
+    if (existing) {
+      existing.label = label;
+      existing.value = value;
+    } else {
+      snippets.push({ id: uid(), label, value });
+    }
+    save();
+    closeForm();
+    render();
+  }
+
+  const updateSave = () => { $('save').disabled = !$('value').value.trim(); };
+  $('value').addEventListener('input', updateSave);
+  $('add').addEventListener('click', () => openForm(null));
+  $('cancel').addEventListener('click', closeForm);
+  $('save').addEventListener('click', submit);
+  $('form').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeForm(); }
+    // Return saves from the name field; in the text, ⌘Return saves (Return adds a line).
+    if (e.key === 'Enter' && !e.isComposing && (e.target.id === 'label' || e.metaKey)) { e.preventDefault(); submit(); }
+  });
+
+  // Files dragged in from outside: ignored (they must not replace the panel)
+  document.addEventListener('dragover', (e) => e.preventDefault());
+  document.addEventListener('drop', (e) => e.preventDefault());
+
+  // Called by the app when the panel opens
+  window.snippetsFocus = () => { if (!$('form').hidden) $('label').focus(); };
+
+  render();
+})();
+</script>
+</body>
+</html>

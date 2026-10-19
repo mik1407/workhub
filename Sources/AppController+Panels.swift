@@ -10,6 +10,11 @@ extension AppController {
         setPanel(openPanel == .todos ? nil : .todos, animated: true, focus: true)
     }
 
+    @objc func toggleSnippets(_ sender: Any?) {
+        showWindow()
+        setPanel(openPanel == .snippets ? nil : .snippets, animated: true, focus: true)
+    }
+
     @objc func toggleFocus(_ sender: Any?) {
         showWindow()
         setPanel(openPanel == .focus ? nil : .focus, animated: true, focus: true)
@@ -20,13 +25,16 @@ extension AppController {
         openPanel = target
         todoButton.isActive = target == .todos
         focusButton.isActive = target == .focus
+        snippetsButton.isActive = target == .snippets
         todoMenuItem?.state = target == .todos ? .on : .off
         focusMenuItem?.state = target == .focus ? .on : .off
+        snippetsMenuItem?.state = target == .snippets ? .on : .off
         UserDefaults.standard.set(target?.rawValue ?? "", forKey: "openPanel")
         if let target = target {
             // Switch content; when closing, the current one stays visible as it slides away.
             todoPanel.webView.isHidden = target != .todos
             focusPanel.webView.isHidden = target != .focus
+            snippetsPanel.webView.isHidden = target != .snippets
             if target == .focus { focusPanel.run("window.focusUpdate && window.focusUpdate(\(focusTimer.stateJSON))") }
         }
         panelTransition += 1
@@ -57,6 +65,9 @@ extension AppController {
                     todoPanel.focusInput()
                 case .focus:
                     _ = window.makeFirstResponder(focusPanel.webView)
+                case .snippets:
+                    _ = window.makeFirstResponder(snippetsPanel.webView)
+                    snippetsPanel.focus()
                 }
             }
         } else {

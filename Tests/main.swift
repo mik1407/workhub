@@ -156,6 +156,10 @@ check(!Theme.apply(.light), "same theme: no change")
 equal(Theme.content, NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1), "white cards in light mode")
 check(Theme.apply(.dark) && !Theme.isLight, "back to dark")
 
+section("Snippets")
+check(SnippetsPanel.isReadable(#"{"version":1,"snippets":[{"id":"a","label":"Phone","value":"+39 333"}]}"#), "saved snippets are readable")
+check(!SnippetsPanel.isReadable("{ broken"), "broken file is not")
+
 section("Catalog")
 check(serviceCatalog.contains { $0.id == "fellow" && $0.url.host == "fellow.app" }, "Fellow is in the catalog")
 equal(Set(serviceCatalog.map(\.id)).count, serviceCatalog.count, "catalog ids are unique")

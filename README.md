@@ -126,6 +126,7 @@ To quit completely, press ⌘Q.
 | Back / Forward | ⌘[ / ⌘] |
 | Open or close the to-do list | ⌘T, or the double check mark on the right |
 | Open or close the focus timer | ⌘⇧F, or the stopwatch on the right |
+| Open or close your snippets | The clipboard icon on the right, or View > Snippets |
 | Open Settings | ⌘, (Command + comma), or the gear at the bottom left |
 | Hide the window (notifications keep working) | ⌘W |
 
@@ -153,6 +154,17 @@ A panel on the right with two lists, **Personal** and **Work**, and a **Today** 
   date and time). The date turns blue when it's due today and red when it's overdue.
 - At the due time you get a Mac notification, even if WorkHub is closed, with **Mark as done** and
   **Remind me in 1 hour**. The Todos icon shows how many todos are overdue.
+
+### Snippets
+
+Text you paste often, like your phone number, address, IBAN or a link: open the clipboard icon on the right
+(under Todos and Focus).
+
+- **Click a snippet to copy it.** That's all: it's on the clipboard, ready to paste with ⌘V. "Copied" confirms it.
+- **Add a snippet** with a name (for example "Phone") and the text. The text can have several lines, like an
+  address: Return adds a line, ⌘Return saves.
+- Hover over a snippet to edit or delete it.
+- Snippets are saved only on your Mac, in `~/Library/Application Support/WorkHub/snippets.json`.
 
 ### Focus
 

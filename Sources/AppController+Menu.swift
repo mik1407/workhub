@@ -66,6 +66,10 @@ extension AppController {
         focusItem.target = self
         focusItem.state = openPanel == .focus ? .on : .off
         focusMenuItem = focusItem
+        let snippetsItem = view.addItem(withTitle: "Snippets", action: #selector(toggleSnippets(_:)), keyEquivalent: "")
+        snippetsItem.target = self
+        snippetsItem.state = openPanel == .snippets ? .on : .off
+        snippetsMenuItem = snippetsItem
         view.addItem(.separator())
         view.addItem(withTitle: "Back", action: #selector(navigateBack(_:)), keyEquivalent: "[").target = self
         view.addItem(withTitle: "Forward", action: #selector(navigateForward(_:)), keyEquivalent: "]").target = self

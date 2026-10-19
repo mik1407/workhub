@@ -15,6 +15,9 @@ final class AppController: NSObject, NSWindowDelegate {
     let focusTimer = FocusTimer()
     let focusPanel = LocalPanel(page: "focus", handler: "focus", servicesTouchBar: true)
     let focusButton = RailButton(image: RailIcons.stopwatch(), tooltip: "Focus  ⌘⇧F")
+    let snippetsPanel = SnippetsPanel()
+    let snippetsButton = RailButton(image: RailIcons.clipboard(), tooltip: "Snippets")
+    var snippetsMenuItem: NSMenuItem?
     var contentTrailing: NSLayoutConstraint!   // 0 = full-width service, -360 = leaves room for the panel
     var panelLeading: NSLayoutConstraint!      // -360 = panel visible, 0 = hidden under the right rail
     var todoMenuItem: NSMenuItem?
@@ -22,7 +25,7 @@ final class AppController: NSObject, NSWindowDelegate {
     var openPanel: SidePanel?                  // panel open on the right (one at a time)
     var panelTransition = 0                    // invalidates animations superseded by a new click
 
-    enum SidePanel: String { case todos, focus }
+    enum SidePanel: String { case todos, focus, snippets }
     private(set) var services: [ServiceController] = []
     private(set) var selectedIndex = 0
     private var keyMonitor: Any?
@@ -64,6 +67,7 @@ final class AppController: NSObject, NSWindowDelegate {
         Theme.refresh(rail)
         todoPanel.panel.applyTheme()
         focusPanel.applyTheme()
+        snippetsPanel.panel.applyTheme()
         settingsWindow?.applyTheme()
         focusChanged()   // Focus button ring color
     }
@@ -91,7 +95,7 @@ final class AppController: NSObject, NSWindowDelegate {
             card.layer?.masksToBounds = true
             card.layer?.backgroundColor = Theme.content.cgColor
         }
-        for page in [todoPanel.webView, focusPanel.webView] {
+        for page in [todoPanel.webView, focusPanel.webView, snippetsPanel.webView] {
             page.translatesAutoresizingMaskIntoConstraints = false
             page.isHidden = true
             panelContainer.addSubview(page)
@@ -141,8 +145,10 @@ final class AppController: NSObject, NSWindowDelegate {
 
         todoButton.onClick = { [weak self] in self?.toggleTodos(nil) }
         focusButton.onClick = { [weak self] in self?.toggleFocus(nil) }
+        snippetsButton.onClick = { [weak self] in self?.toggleSnippets(nil) }
         rail.add(todoButton)
         rail.add(focusButton)
+        rail.add(snippetsButton)
         setupFocus()
     }
 

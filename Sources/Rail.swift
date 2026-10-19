@@ -137,6 +137,33 @@ extension RailIcons {
             .withSymbolConfiguration(configuration) ?? NSImage(size: NSSize(width: 20, height: 20))
     }
 
+    /// Clipboard for the Snippets panel.
+    static func clipboard(size: CGFloat = 20) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: true) { rect in
+            let s = rect.width / 24
+            func r(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> NSRect { NSRect(x: x * s, y: y * s, width: w * s, height: h * s) }
+            let board = NSBezierPath(roundedRect: r(5, 4.5, 14, 17), xRadius: 2.5 * s, yRadius: 2.5 * s)
+            let clip = NSBezierPath(roundedRect: r(9, 2.5, 6, 4), xRadius: 1.5 * s, yRadius: 1.5 * s)
+            let lines = NSBezierPath()
+            lines.move(to: NSPoint(x: 9 * s, y: 12 * s)); lines.line(to: NSPoint(x: 15 * s, y: 12 * s))
+            lines.move(to: NSPoint(x: 9 * s, y: 16 * s)); lines.line(to: NSPoint(x: 13 * s, y: 16 * s))
+            for path in [board, clip, lines] {
+                path.lineWidth = 2 * s
+                path.lineCapStyle = .round
+                path.lineJoinStyle = .round
+            }
+            NSColor.black.setStroke()
+            board.stroke()
+            NSColor.black.setFill()
+            clip.fill()   // filled clip on top of the board's outline
+            lines.stroke()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Snippets"
+        return image
+    }
+
     /// Stopwatch for the Focus panel.
     static func stopwatch(size: CGFloat = 20) -> NSImage {
         let image = NSImage(size: NSSize(width: size, height: size), flipped: true) { rect in

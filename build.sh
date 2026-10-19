@@ -57,7 +57,7 @@ else
 fi
 
 cp Info.plist "$APP/Contents/Info.plist"
-cp Resources/AppIcon.icns Resources/todos.html Resources/focus.html Resources/settings.html "$APP/Contents/Resources/"
+cp Resources/AppIcon.icns Resources/todos.html Resources/focus.html Resources/snippets.html Resources/settings.html "$APP/Contents/Resources/"
 
 # Focus sounds: they go into your Library, not inside the app (so they don't end up in the DMG).
 # Sounds already there are not overwritten.
