@@ -46,7 +46,7 @@
   .tabs {
     flex: none;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 2px;
     margin: 16px var(--pad) 0;
     padding: 3px;
@@ -203,6 +203,14 @@
   .item:hover .icon { opacity: 1; }
   .icon:hover { background: rgba(255, 107, 94, 0.12); color: var(--danger); }
   .icon.cal:hover { background: var(--surface); color: var(--text); }
+  .icon.sun:hover { background: var(--accent-soft); color: var(--accent); }
+  .icon.sun.on { opacity: 1; color: var(--accent); }   /* already in Today: always visible */
+
+  /* In Today: the list each todo comes from */
+  .tag { flex: none; height: 18px; padding: 0 7px; border-radius: 9px; font-size: 11px; font-weight: 500; line-height: 18px; }
+  .tag.work { background: var(--accent-soft); color: var(--accent); }
+  .tag.personal { background: rgba(167, 139, 250, 0.15); color: #b39dfb; }
+  :root[data-theme="light"] .tag.personal { background: rgba(124, 92, 214, 0.1); color: #7c5cd6; }
 
   /* Due date */
   .due {
@@ -338,6 +346,10 @@
   // Fixed lists. Todos from lists that no longer exist end up in FALLBACK.
   const LISTS = [{ id: 'personal', name: 'Personal' }, { id: 'work', name: 'Work' }];
   const FALLBACK = 'work';
+  // Today isn't a list: it shows the todos of any list marked for today (each keeps its own list).
+  const TODAY = 'today';
+  const VIEWS = [{ id: TODAY, name: 'Today' }].concat(LISTS);
+  const listName = (id) => (LISTS.find((l) => l.id === id) || { name: id }).name;
 
   const svg = (paths, width) =>
     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${width || 2}" ` +
@@ -348,6 +360,7 @@
     cal: svg('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>', 2),
     chevron: svg('<path d="M6 9l6 6 6-6"/>', 2.4),
     clear: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>', 1.6),
+    sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>', 2),
     grip: '<svg viewBox="0 0 8 14" fill="currentColor" aria-hidden="true">' +
       '<circle cx="2" cy="2" r="1.2"/><circle cx="6" cy="2" r="1.2"/><circle cx="2" cy="7" r="1.2"/>' +
       '<circle cx="6" cy="7" r="1.2"/><circle cx="2" cy="12" r="1.2"/><circle cx="6" cy="12" r="1.2"/></svg>',
@@ -364,7 +377,7 @@
   const known = new Set(LISTS.map((l) => l.id));
 
   function load() {
-    const s = { version: 2, lists: LISTS, todos: [], active: LISTS[0].id, doneCollapsed: false };
+    const s = { version: 2, lists: LISTS, todos: [], active: LISTS[0].id, lastList: LISTS[0].id, doneCollapsed: false };
     let saved = null;
     try {
       saved = typeof window.__todoData === 'string' ? JSON.parse(window.__todoData) : window.__todoData;
@@ -381,8 +394,10 @@
         createdAt: t.createdAt || Date.now(),
         doneAt: t.done ? (t.doneAt || Date.now()) : null,
         due: typeof t.due === 'number' && isFinite(t.due) ? t.due : null,
+        today: !!t.today,
       }));
-    if (known.has(saved.active)) s.active = saved.active;
+    if (known.has(saved.active) || saved.active === TODAY) s.active = saved.active;
+    if (known.has(saved.lastList)) s.lastList = saved.lastList;
     s.doneCollapsed = !!saved.doneCollapsed;
     return s;
   }
@@ -464,13 +479,13 @@
 
   function renderTabs() {
     tabsEl.textContent = '';
-    for (const list of LISTS) {
+    for (const list of VIEWS) {
       const b = el('button', 'tab' + (state.active === list.id ? ' active' : ''));
       b.dataset.list = list.id;
       const name = el('span', 'name');
       name.textContent = list.name;
       b.append(name);
-      const open = state.todos.filter((t) => t.listId === list.id && !t.done).length;
+      const open = state.todos.filter((t) => inView(t, list.id) && !t.done).length;
       if (open) {
         const count = el('span', 'count');
         count.textContent = String(open);
@@ -480,8 +495,10 @@
     }
   }
 
+  const inView = (t, view) => (view === TODAY ? t.today : t.listId === view);
+
   function renderList() {
-    const items = state.todos.filter((t) => t.listId === state.active);
+    const items = state.todos.filter((t) => inView(t, state.active));
     const open = items.filter((t) => !t.done);
     const done = items.filter((t) => t.done).sort((a, b) => (b.doneAt || 0) - (a.doneAt || 0));
     listEl.textContent = '';
@@ -491,7 +508,9 @@
       const title = el('strong');
       title.textContent = 'All clear';
       const hint = el('span');
-      hint.textContent = `Add a todo above, or drag one from ${other ? other.name : 'another list'}.`;
+      hint.textContent = state.active === TODAY
+        ? 'Add a todo above, or click the sun on a todo in Personal or Work.'
+        : `Add a todo above, or drag one from ${other ? other.name : 'another list'}.`;
       empty.append(title, hint);
       listEl.append(empty);
       return;
@@ -527,6 +546,18 @@
       const text = el('span', 'text');
       appendLinkified(text, t.text);
       r.append(text);
+    }
+    if (state.active === TODAY) {
+      const tag = el('span', 'tag ' + t.listId);
+      tag.textContent = listName(t.listId);
+      r.append(tag);
+    }
+    // Next to the text, so the sun of a todo in Today sits right after it
+    if (!t.done) {
+      const sun = el('button', 'icon sun' + (t.today ? ' on' : ''), ICON.sun);
+      sun.dataset.action = 'today';
+      sun.title = t.today ? 'Remove from Today' : 'Add to Today';
+      r.append(sun);
     }
     if (!t.done && t.due) {
       const due = el('button', 'due ' + dueClass(t.due));
@@ -586,8 +617,10 @@
     e.preventDefault();
     const text = addEl.value.trim();
     if (!text) return;
+    const inToday = state.active === TODAY;
     state.todos.unshift({
-      id: uid(), listId: state.active, text, done: false, starred: false, createdAt: Date.now(), doneAt: null, due: null,
+      id: uid(), listId: inToday ? state.lastList : state.active, text, done: false, starred: false,
+      createdAt: Date.now(), doneAt: null, due: null, today: inToday,
     });
     addEl.value = '';
     commit();
@@ -597,6 +630,7 @@
     const tab = closest(e, '.tab');
     if (!tab || state.active === tab.dataset.list) return;
     state.active = tab.dataset.list;
+    if (state.active !== TODAY) state.lastList = state.active;
     editingId = null;
     commit();
   });
@@ -632,6 +666,10 @@
       commit();
     }
     if (action === 'due') openDue(t, button);
+    if (action === 'today') {
+      t.today = !t.today;
+      commit();
+    }
   });
 
   listEl.addEventListener('dblclick', (e) => {
@@ -643,7 +681,8 @@
   });
 
   // ---------- Dragging ----------
-  // Drag a row up/down to reorder, or onto the other list (at the top) to move it there.
+  // Drag a row up/down to reorder, onto the other list (at the top) to move it there,
+  // or onto Today to add it to today.
 
   listEl.addEventListener('mousedown', (e) => {
     if (e.button !== 0 || editingId) return;
@@ -732,6 +771,16 @@
     const t = state.todos.find((x) => x.id === d.id);
     if (!drop || !t) { render(); return; }
 
+    if (d.target === TODAY) {
+      t.today = true;
+      commit();
+      const tab = tabsEl.querySelector(`.tab[data-list="${TODAY}"]`);
+      if (tab) {
+        tab.classList.add('received');
+        setTimeout(() => tab.classList.remove('received'), 700);
+      }
+      return;
+    }
     if (d.target) {
       // Moved to the other list: it goes to the top.
       t.listId = d.target;
