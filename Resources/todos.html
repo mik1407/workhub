@@ -201,6 +201,18 @@
   }
   .icon svg { width: 13px; height: 13px; }
   .item:hover .icon { opacity: 1; }
+  /* Hover buttons: over the end of the row, on the row's own (hover) background, fading into the text */
+  .actions {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    display: none; align-items: center; gap: 2px; padding-left: 4px;
+    background: linear-gradient(var(--hover), var(--hover)), var(--bg);
+  }
+  .actions::before {
+    content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 18px;
+    background: linear-gradient(to right, transparent, var(--bg));
+  }
+  .item:hover .actions { display: flex; }
+  .item.editing .actions, body.is-dragging .actions, .ghost .actions { display: none !important; }
   .icon:hover { background: rgba(255, 107, 94, 0.12); color: var(--danger); }
   .icon.cal:hover { background: var(--surface); color: var(--text); }
   .icon.sun:hover { background: var(--accent-soft); color: var(--accent); }
@@ -541,6 +553,7 @@
     check.title = t.done ? 'Mark as not done' : 'Mark as done';
     r.append(check);
     if (editingId === t.id) {
+      r.classList.add('editing');
       r.append(editInput(t));
     } else {
       const text = el('span', 'text');
@@ -553,12 +566,14 @@
       tag.title = listName(t.listId);
       r.append(tag);
     }
-    // Next to the text, so the sun of a todo in Today sits right after it
+    // Buttons shown only on hover go in an overlay at the end of the row, so they take no space
+    // from the text; what's always visible (sun of a todo in Today, due date) stays in the row.
+    const actions = el('div', 'actions');
     if (!t.done) {
       const sun = el('button', 'icon sun' + (t.today ? ' on' : ''), ICON.sun);
       sun.dataset.action = 'today';
       sun.title = t.today ? 'Remove from Today' : 'Add to Today';
-      r.append(sun);
+      (t.today ? r : actions).append(sun);
     }
     if (!t.done && t.due) {
       const due = el('button', 'due ' + dueClass(t.due));
@@ -570,12 +585,13 @@
       const cal = el('button', 'icon cal', ICON.cal);
       cal.dataset.action = 'due';
       cal.title = 'Set due date';
-      r.append(cal);
+      actions.append(cal);
     }
     const del = el('button', 'icon', ICON.x);
     del.dataset.action = 'delete';
     del.title = 'Delete';
-    r.append(del);
+    actions.append(del);
+    r.append(actions);
     return r;
   }
 
