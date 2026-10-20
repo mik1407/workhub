@@ -98,9 +98,11 @@ final class ServicesTouchBar: NSObject, NSTouchBarDelegate {
 /// WebKit's own Touch Bar (word suggestions while typing) is not shown in these views.
 final class HubWebView: WKWebView {
     private var observer: NSObjectProtocol?
+    private var dragTypes: [NSPasteboard.PasteboardType] = []   // the file types WebKit accepts when dropped
 
     override init(frame: CGRect, configuration: WKWebViewConfiguration) {
         super.init(frame: frame, configuration: configuration)
+        dragTypes = registeredDraggedTypes
         observer = NotificationCenter.default.addObserver(forName: ServicesTouchBar.changed, object: nil,
                                                           queue: .main) { [weak self] _ in
             self?.touchBar = nil   // rebuilt with the new services the next time it's shown
@@ -115,6 +117,36 @@ final class HubWebView: WKWebView {
 
     override func makeTouchBar() -> NSTouchBar? {
         ServicesTouchBar.shared.makeTouchBar()
+    }
+
+    // MARK: - Drops only on the visible page
+    // The services (and the side panels) are stacked in the same window and only one is visible, but macOS
+    // hands a file dragged from the Finder to the topmost page that accepts drops, even a hidden one: a file
+    // dropped on ChatGPT ended up in WhatsApp (the last service), or in a closed panel that ignores it.
+    // A hidden page (itself or inside a hidden panel) stops accepting drops until it's shown again.
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        updateDropRegistration()
+    }
+
+    override func viewDidUnhide() {
+        super.viewDidUnhide()
+        updateDropRegistration()
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        updateDropRegistration()
+    }
+
+    private func updateDropRegistration() {
+        if dragTypes.isEmpty { dragTypes = registeredDraggedTypes }
+        if isHiddenOrHasHiddenAncestor {
+            unregisterDraggedTypes()
+        } else if !dragTypes.isEmpty {
+            registerForDraggedTypes(dragTypes)
+        }
     }
 
     // MARK: - Drag and drop diagnostics

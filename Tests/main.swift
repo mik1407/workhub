@@ -1,4 +1,5 @@
 import Cocoa
+import WebKit
 
 // WorkHub logic tests, without opening any windows: ./build.sh test
 // Compiled together with Sources/ (except main.swift). Each check prints OK or FAIL;
@@ -159,6 +160,22 @@ check(Theme.apply(.dark) && !Theme.isLight, "back to dark")
 section("Snippets")
 check(SnippetsPanel.isReadable(#"{"version":1,"snippets":[{"id":"a","label":"Phone","value":"+39 333"}]}"#), "saved snippets are readable")
 check(!SnippetsPanel.isReadable("{ broken"), "broken file is not")
+
+section("Drops only on the visible page")
+let page = HubWebView(frame: NSRect(x: 0, y: 0, width: 200, height: 200), configuration: WKWebViewConfiguration())
+let acceptedTypes = page.registeredDraggedTypes
+let files = NSPasteboard.PasteboardType("NSFilenamesPboardType")   // how WebKit registers dropped files
+check(acceptedTypes.contains(files), "a visible page accepts dropped files")
+page.isHidden = true
+check(page.registeredDraggedTypes.isEmpty, "a hidden page doesn't")
+page.isHidden = false
+check(Set(page.registeredDraggedTypes) == Set(acceptedTypes), "shown again, it accepts them again")
+let closedPanel = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 200))
+closedPanel.addSubview(page)
+closedPanel.isHidden = true
+check(page.registeredDraggedTypes.isEmpty, "a page inside a hidden panel doesn't")
+closedPanel.isHidden = false
+check(Set(page.registeredDraggedTypes) == Set(acceptedTypes), "panel shown again: the page accepts files")
 
 section("Catalog")
 check(serviceCatalog.contains { $0.id == "fellow" && $0.url.host == "fellow.app" }, "Fellow is in the catalog")
