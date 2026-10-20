@@ -148,41 +148,4 @@ final class HubWebView: WKWebView {
             registerForDraggedTypes(dragTypes)
         }
     }
-
-    // MARK: - Drag and drop diagnostics
-    // Files dragged from the Finder sometimes don't reach the page: these log what WebKit receives and
-    // answers (log show --predicate 'eventMessage CONTAINS "WorkHub drag"'). Behavior is unchanged.
-
-    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        let operation = super.draggingEntered(sender)
-        log("entered", sender, "operation \(operation.rawValue)")
-        return operation
-    }
-
-    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        let accepted = super.performDragOperation(sender)
-        log("dropped", sender, accepted ? "accepted" : "refused")
-        return accepted
-    }
-
-    private func log(_ event: String, _ info: NSDraggingInfo, _ result: String) {
-        let files = info.draggingPasteboard.readObjects(forClasses: [NSURL.self],
-                                                        options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
-        let page = url?.host ?? "no page"
-        let active = NSApp.isActive ? "app active" : "app inactive"
-        let key = window?.isKeyWindow == true ? "key window" : "not key"
-        let types = info.draggingPasteboard.types?.map(\.rawValue).joined(separator: ",") ?? "-"
-        let line = "\(Date()) \(event) on \(page): \(files.count) file(s), types \(types), \(active), \(key), \(result)"
-        NSLog("WorkHub drag %@", line)
-        Self.appendToDragLog(line)
-    }
-
-    /// Also in ~/Library/Application Support/WorkHub/drag-log.txt (last ~200 lines), readable without Console.
-    private static func appendToDragLog(_ line: String) {
-        let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("WorkHub/drag-log.txt")
-        let old = (try? String(contentsOf: url, encoding: .utf8)) ?? ""
-        let lines = (old.split(separator: "\n").suffix(199).map(String.init) + [line]).joined(separator: "\n") + "\n"
-        try? lines.write(to: url, atomically: true, encoding: .utf8)
-    }
 }
