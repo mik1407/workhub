@@ -116,4 +116,30 @@ final class HubWebView: WKWebView {
     override func makeTouchBar() -> NSTouchBar? {
         ServicesTouchBar.shared.makeTouchBar()
     }
+
+    // MARK: - Drag and drop diagnostics
+    // Files dragged from the Finder sometimes don't reach the page: these log what WebKit receives and
+    // answers (log show --predicate 'eventMessage CONTAINS "WorkHub drag"'). Behavior is unchanged.
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        let operation = super.draggingEntered(sender)
+        log("entered", sender, "operation \(operation.rawValue)")
+        return operation
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let accepted = super.performDragOperation(sender)
+        log("dropped", sender, accepted ? "accepted" : "refused")
+        return accepted
+    }
+
+    private func log(_ event: String, _ info: NSDraggingInfo, _ result: String) {
+        let files = info.draggingPasteboard.readObjects(forClasses: [NSURL.self],
+                                                        options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        let page = url?.host ?? "no page"
+        let active = NSApp.isActive ? "app active" : "app inactive"
+        let key = window?.isKeyWindow == true ? "key window" : "not key"
+        NSLog("WorkHub drag %@ on %@: %ld file(s), types %@, %@, %@, %@", event, page, files.count,
+              info.draggingPasteboard.types?.map(\.rawValue).joined(separator: ",") ?? "-", active, key, result)
+    }
 }
