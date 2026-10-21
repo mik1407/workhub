@@ -190,7 +190,23 @@ extension RailIcons {
 /// Vertical bar on the right side of the window.
 final class RightRail: NSView {
     static let width: CGFloat = 56
+    private static let weekHeight: CGFloat = 24   // week number at the top, above the buttons
     private var buttons: [RailButton] = []
+    private var dayObserver: NSObjectProtocol?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        // A new day may be a new week: redraw the number (also after waking from sleep).
+        dayObserver = NotificationCenter.default.addObserver(forName: .NSCalendarDayChanged, object: nil,
+                                                             queue: .main) { [weak self] _ in self?.updateWeek() }
+        updateWeek()
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
+
+    deinit {
+        if let dayObserver = dayObserver { NotificationCenter.default.removeObserver(dayObserver) }
+    }
 
     override var isFlipped: Bool { true }
 
@@ -200,9 +216,22 @@ final class RightRail: NSView {
         needsLayout = true
     }
 
+    /// ISO 8601 week (weeks start on Monday; week 1 holds the year's first Thursday), e.g. "W43".
+    static func weekLabel(for date: Date) -> (short: String, full: String) {
+        let calendar = Calendar(identifier: .iso8601)
+        let week = calendar.component(.weekOfYear, from: date)
+        let year = calendar.component(.yearForWeekOfYear, from: date)
+        return ("W\(week)", "Week \(week), \(year)")
+    }
+
+    private func updateWeek() {
+        toolTip = Self.weekLabel(for: Date()).full
+        needsDisplay = true
+    }
+
     override func layout() {
         super.layout()
-        var y: CGFloat = 10
+        var y: CGFloat = 6 + Self.weekHeight
         for button in buttons {
             button.frame = NSRect(x: (bounds.width - RailButton.size) / 2, y: y,
                                   width: RailButton.size, height: RailButton.size)
@@ -213,5 +242,13 @@ final class RightRail: NSView {
     override func draw(_ dirtyRect: NSRect) {
         Theme.sidebar.setFill()
         NSBezierPath(rect: bounds).fill()
+        let text = Self.weekLabel(for: Date()).short as NSString
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold),
+            .foregroundColor: Theme.railIcon,
+        ]
+        let size = text.size(withAttributes: attrs)
+        text.draw(at: NSPoint(x: (bounds.width - size.width) / 2, y: 6 + (Self.weekHeight - size.height) / 2),
+                  withAttributes: attrs)
     }
 }

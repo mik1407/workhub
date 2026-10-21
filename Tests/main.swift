@@ -177,6 +177,17 @@ check(page.registeredDraggedTypes.isEmpty, "a page inside a hidden panel doesn't
 closedPanel.isHidden = false
 check(Set(page.registeredDraggedTypes) == Set(acceptedTypes), "panel shown again: the page accepts files")
 
+section("Week number")
+func day(_ text: String) -> Date {
+    let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd HH:mm"; f.timeZone = .current
+    return f.date(from: text)!
+}
+equal(RightRail.weekLabel(for: day("2026-10-21 12:00")).short, "W43", "21 October 2026 is week 43")
+equal(RightRail.weekLabel(for: day("2026-10-19 00:05")).short, "W43", "the week starts on Monday")
+equal(RightRail.weekLabel(for: day("2026-10-18 23:55")).short, "W42", "Sunday still belongs to the previous week")
+equal(RightRail.weekLabel(for: day("2027-01-01 12:00")).full, "Week 53, 2026", "1 January 2027 is in week 53 of 2026")
+equal(RightRail.weekLabel(for: day("2026-01-01 12:00")).full, "Week 1, 2026", "1 January 2026 (a Thursday) is week 1")
+
 section("Catalog")
 check(serviceCatalog.contains { $0.id == "fellow" && $0.url.host == "fellow.app" }, "Fellow is in the catalog")
 equal(Set(serviceCatalog.map(\.id)).count, serviceCatalog.count, "catalog ids are unique")
