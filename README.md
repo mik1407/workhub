@@ -127,7 +127,7 @@ To quit completely, press ⌘Q.
 | Open or close the to-do list | ⌘T, or the double check mark on the right |
 | Open or close the focus timer | ⌘⇧F, or the stopwatch on the right |
 | Open or close your snippets | The clipboard icon on the right, or View > Snippets |
-| See the week number | Top of the right bar (for example W43); hover for the year |
+| See the week number | Bottom of the right bar (for example W43); hover for the year |
 | Open Settings | ⌘, (Command + comma), or the gear at the bottom left |
 | Hide the window (notifications keep working) | ⌘W |
 

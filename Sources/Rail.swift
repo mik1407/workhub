@@ -190,7 +190,7 @@ extension RailIcons {
 /// Vertical bar on the right side of the window.
 final class RightRail: NSView {
     static let width: CGFloat = 56
-    private static let weekHeight: CGFloat = 24   // week number at the top, above the buttons
+    private static let weekHeight: CGFloat = 44   // week number at the bottom, level with the Settings gear
     private var buttons: [RailButton] = []
     private var dayObserver: NSObjectProtocol?
 
@@ -231,12 +231,13 @@ final class RightRail: NSView {
 
     override func layout() {
         super.layout()
-        var y: CGFloat = 6 + Self.weekHeight
+        var y: CGFloat = 10
         for button in buttons {
             button.frame = NSRect(x: (bounds.width - RailButton.size) / 2, y: y,
                                   width: RailButton.size, height: RailButton.size)
             y += RailButton.size + 6
         }
+        needsDisplay = true   // the week number follows the bottom edge
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -248,7 +249,9 @@ final class RightRail: NSView {
             .foregroundColor: Theme.accent,   // the app's orange, like the active-service indicator
         ]
         let size = text.size(withAttributes: attrs)
-        text.draw(at: NSPoint(x: (bounds.width - size.width) / 2, y: 6 + (Self.weekHeight - size.height) / 2),
+        // Same band as the Settings gear at the bottom of the left sidebar (44 pt, 14 pt from the bottom).
+        let top = bounds.height - 14 - Self.weekHeight
+        text.draw(at: NSPoint(x: (bounds.width - size.width) / 2, y: top + (Self.weekHeight - size.height) / 2),
                   withAttributes: attrs)
     }
 }
