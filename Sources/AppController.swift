@@ -329,6 +329,15 @@ final class AppController: NSObject, NSWindowDelegate {
         guard services.indices.contains(index) else { return }
         selectedIndex = index
         for (i, service) in services.enumerated() { service.webView.isHidden = (i != index) }
+        // The selected page goes on top of the stack: macOS hands a file dragged from the Finder to the topmost
+        // page of the stack even when it's hidden, so only the last service received drops.
+        // sortSubviews reorders without removing the views, so their constraints stay.
+        content.sortSubviews({ a, b, context in
+            let selected = Unmanaged<NSView>.fromOpaque(context!).takeUnretainedValue()
+            if a === selected { return .orderedDescending }
+            if b === selected { return .orderedAscending }
+            return .orderedSame
+        }, context: Unmanaged.passUnretained(services[index].webView).toOpaque())
         sidebar.selectedIndex = index
         _ = window.makeFirstResponder(services[index].webView)
         UserDefaults.standard.set(services[index].config.id, forKey: "selectedService")
